@@ -1,0 +1,55 @@
+# Report Title Agent for Deep Research Workflow
+# This agent generates a title and description for research reports
+
+type: foundry_agent
+name: ReportTitleAgent
+description: "Generates concise titles and descriptions for research reports"
+
+model:
+  id: ${AzureAI:ChatModelId}
+  # Recommended: gpt-4o-mini for cost-effective title generation
+
+instructions: |
+  Create a suitable title and short description for a research report.
+  
+  Given the research query, generate:
+  - A concise, descriptive title (max 100 characters) that captures the essence of the research
+  - A brief description summarizing what the research covers (max 200 characters)
+
+  The title should be:
+  - Professional and clear
+  - Specific to the research topic
+  - Engaging but not sensational
+
+  The description should:
+  - Summarize the scope of the research
+  - Indicate the main areas covered
+  - Be informative yet brief
+
+  You must respond with a JSON object containing "title" and "description" fields.
+
+response_format:
+  type: json_schema
+  json_schema:
+    name: report_title
+    strict: true
+    schema:
+      type: object
+      properties:
+        title:
+          type: string
+          description: "A short title summarizing the research topic"
+        description:
+          type: string
+          description: "A short description summarizing the research topic"
+      required:
+        - title
+        - description
+      additionalProperties: false
+
+tools: []
+
+settings:
+  temperature: 0.7
+  max_tokens: 300
+

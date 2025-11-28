@@ -1,0 +1,37 @@
+{
+  "name": "web_search_results",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "The URL of the source"
+            },
+            "title": {
+              "type": "string",
+              "description": "The title of the web page"
+            },
+            "content": {
+              "type": "string",
+              "description": "The extracted content from the web page"
+            },
+            "summary": {
+              "type": "string",
+              "description": "A brief summary of the key information found"
+            }
+          },
+          "required": ["url", "content"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": ["results"]
+  }
+}

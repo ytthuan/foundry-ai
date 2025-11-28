@@ -1,0 +1,25 @@
+{
+  "name": "learnings",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "learnings": {
+        "type": "array",
+        "description": "List of learnings extracted from the content, max of 3.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "follow_up_questions": {
+        "type": "array",
+        "description": "List of follow-up questions to research the topic further, max of 3.",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": ["learnings", "follow_up_questions"]
+  }
+}

@@ -1,0 +1,46 @@
+# Web Search Agent for Deep Research Workflow
+# This agent performs web searches and extracts content
+# Note: Requires Bing Search or similar grounding tool configuration in Foundry
+
+type: foundry_agent
+name: WebSearchAgent
+description: "Performs web searches and extracts relevant content from search results"
+
+model:
+  id: ${AzureAI:ChatModelId}
+  # Recommended: gpt-4o with grounding tools enabled
+
+instructions: |
+  You are a web research assistant. Your task is to search the web for information
+  and extract relevant content from the search results.
+  
+  When given a search query:
+  1. Use the Bing Search tool to find relevant web pages
+  2. Extract the main content from the top results
+  3. Summarize the key information found
+  4. Include source URLs for attribution
+  
+  Focus on:
+  - Finding authoritative and credible sources
+  - Extracting factual information
+  - Avoiding duplicate or redundant content
+  - Prioritizing recent and up-to-date information
+  
+  Return the extracted content in a clear, organized format that can be processed
+  for learning extraction.
+
+tools:
+  # Bing Search Grounding - enables web search capability
+  - type: bing_grounding
+    id: bing_search
+    description: "Search the web using Bing"
+  
+  # File Search - if using Azure AI Search index
+  # - type: file_search
+  #   id: knowledge_search
+  #   description: "Search internal knowledge base"
+
+settings:
+  temperature: 0.3
+  max_tokens: 4000
+

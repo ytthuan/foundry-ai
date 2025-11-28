@@ -1,0 +1,18 @@
+{
+  "name": "clarifying_questions",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "questions": {
+        "type": "array",
+        "description": "Follow up questions to clarify the research direction, max of 3.",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": ["questions"]
+  }
+}

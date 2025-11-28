@@ -1,0 +1,517 @@
+# Deep Research Workflow for Microsoft Foundry
+# Converted from n8n DeepResearch workflow
+# This workflow performs multi-step recursive research using AI agents
+#
+# ============================================================================
+# WORKFLOW OVERVIEW (Natural Language Description)
+# ============================================================================
+#
+# PHASE 1: INITIALIZATION
+#   Step 1.1: Initialize variables (datetime, empty learnings array, iteration counter, depth=2, breadth=3)
+#   Step 1.2: Ask user for research query
+#
+# PHASE 2: CLARIFYING QUESTIONS
+#   Step 2.1: Call ClarifyingQuestionsAgent to generate up to 3 clarifying questions
+#   Step 2.2: Parse the response to get questions array
+#   Step 2.3: For EACH question in the array:
+#             - Display the question to user
+#             - Wait for user's answer
+#             - ACCUMULATE the Q&A pair (append to allQuestionsAndAnswers string)
+#   Step 2.4: Build enrichedQuery combining original query + ALL Q&A pairs
+#
+# PHASE 3: REPORT INITIALIZATION
+#   Step 3.1: Call ReportTitleAgent to generate title and description
+#   Step 3.2: Display research started message with title
+#
+# PHASE 4: RECURSIVE RESEARCH LOOP (repeats 'depth' times)
+#   Step 4.1: Check if current_iteration >= depth → if yes, go to PHASE 5
+#   Step 4.2: Increment current_iteration
+#   Step 4.3: Call SERPQueryAgent to generate search queries (up to 'breadth' queries)
+#   Step 4.4: For EACH search query:
+#             - Call WebSearchAgent to search and extract web content
+#             - Call LearningsAgent to extract learnings from content
+#             - ACCUMULATE learnings to all_learnings array
+#             - ACCUMULATE URLs to all_urls array
+#   Step 4.5: Update enrichedQuery with follow-up questions for next iteration
+#   Step 4.6: Loop back to Step 4.1
+#
+# PHASE 5: REPORT GENERATION
+#   Step 5.1: Call ReportAgent with all accumulated learnings
+#   Step 5.2: Add sources section with all URLs
+#   Step 5.3: Display final report to user
+#   Step 5.4: Show completion statistics
+#
+# ============================================================================
+
+kind: workflow
+id: deep-research-workflow
+name: DeepResearch
+description: "A multi-step, recursive research workflow that uses AI agents to perform comprehensive research on complex topics. Similar to OpenAI's DeepResearch feature."
+version: "1.0.0"
+
+# =============================================================================
+# WORKFLOW TRIGGER - Starts when user initiates conversation
+# =============================================================================
+trigger:
+  kind: OnConversationStart
+  id: trigger_deep_research
+  actions:
+
+    # =========================================================================
+    # PHASE 1: INITIALIZATION
+    # =========================================================================
+
+    # Step 1.1: Initialize all workflow variables
+    - kind: SetVariable
+      id: init_datetime
+      variable:
+        name: currentDateTime
+        type: string
+        value: "=Text(Now(), \"yyyy-mm-dd hh:mm:ss\")"
+
+    - kind: SetVariable
+      id: init_learnings
+      variable:
+        name: all_learnings
+        type: array
+        value: []
+
+    - kind: SetVariable
+      id: init_urls
+      variable:
+        name: all_urls
+        type: array
+        value: []
+
+    - kind: SetVariable
+      id: init_iteration
+      variable:
+        name: current_iteration
+        type: number
+        value: 0
+
+    - kind: SetVariable
+      id: init_depth
+      variable:
+        name: depth
+        type: number
+        value: 2
+
+    - kind: SetVariable
+      id: init_breadth
+      variable:
+        name: breadth
+        type: number
+        value: 3
+
+    # Initialize Q&A accumulator (used in clarifying questions loop)
+    - kind: SetVariable
+      id: init_qa_accumulator
+      variable:
+        name: all_questions_and_answers
+        type: string
+        value: ""
+
+    # Step 1.2: Ask user for research topic
+    - kind: AskQuestion
+      id: ask_research_topic
+      message: |
+        # 🔬 DeepResearch
+        
+        Welcome to DeepResearch - a multi-step, recursive approach using AI to solve complex research tasks.
+        
+        **What would you like to research?**
+        
+        Please provide a detailed description of the topic you want to research.
+      output:
+        saveResponseAs: research_query
+
+    # =========================================================================
+    # PHASE 2: CLARIFYING QUESTIONS
+    # =========================================================================
+
+    # Step 2.1: Generate clarifying questions using AI agent
+    - kind: InvokeAzureAgent
+      id: clarifying_questions_agent
+      agent:
+        name: ClarifyingQuestionsAgent
+        ref: agents/clarifying-questions-agent.yaml
+      input:
+        messages: "=Concatenate(\"Given the following query from the user, ask some follow up questions to clarify the research direction. Return a maximum of 3 questions, but feel free to return less if the original query is clear: <query>\", Local.research_query, \"</query>\")"
+      output:
+        saveResponseAs: clarifying_questions_response
+        autoSend: false
+
+    # Step 2.2: Parse clarifying questions response
+    - kind: ParseValue
+      id: parse_questions
+      input: "=Local.clarifying_questions_response"
+      output:
+        saveAs: clarifying_questions
+        format: json
+
+    # Step 2.3: Ask clarifying questions - WORKAROUND: Ask all at once to avoid ForEach loop issues
+    - kind: If
+      id: check_has_questions
+      condition: "=CountRows(Local.clarifying_questions.questions) > 0"
+      then:
+        # Build a single message with all questions numbered
+        - kind: SetVariable
+          id: format_all_questions
+          variable:
+            name: formatted_questions
+            type: string
+            value: "=Concat(ForAll(Sequence(CountRows(Local.clarifying_questions.questions)), Concatenate(Text(Value), \". \", Index(Local.clarifying_questions.questions, Value).Value, Char(10), Char(10))))"
+
+        # Ask all questions in a single prompt
+        - kind: AskQuestion
+          id: ask_all_clarifying
+          message: |
+            To better understand your research needs, please answer the following questions:
+            
+            {Local.formatted_questions}
+            
+            **Please provide your answers below** (you can number them or answer in any format):
+          output:
+            saveResponseAs: all_answers
+
+        # Store the Q&A for enriched query
+        - kind: SetVariable
+          id: store_qa
+          variable:
+            name: all_questions_and_answers
+            type: string
+            value: "=Concatenate(\"Questions:\", Char(10), Local.formatted_questions, Char(10), \"User's Answers:\", Char(10), Local.all_answers)"
+
+        # Step 2.4: Build enriched query with Q&A
+        - kind: SetVariable
+          id: build_enriched_query
+          variable:
+            name: enriched_research_query
+            type: string
+            value: "=Concatenate(\"Initial query: \", Local.research_query, Char(10), Char(10), \"Clarifying Questions and Answers:\", Char(10), Local.all_questions_and_answers)"
+
+        # Display the enriched query for confirmation
+        - kind: SendMessage
+          id: show_enriched_query
+          message: |
+            ✅ Thank you for your answers!
+            
+            **Your enriched research query:**
+            {Local.enriched_research_query}
+      else:
+        # No clarifying questions needed - use original query
+        - kind: SetVariable
+          id: use_original_query
+          variable:
+            name: enriched_research_query
+            type: string
+            value: "=Local.research_query"
+
+    # =========================================================================
+    # PHASE 3: REPORT INITIALIZATION
+    # =========================================================================
+
+    # Step 3.1: Generate report title and description
+    - kind: InvokeAzureAgent
+      id: report_title_agent
+      agent:
+        name: ReportTitleAgent
+        ref: agents/report-title-agent.yaml
+      input:
+        messages: "=Concatenate(\"Create a suitable title for the research report which will be created from the user's query:\", Char(10), \"<query>\", Local.enriched_research_query, \"</query>\")"
+      output:
+        saveResponseAs: report_title_response
+        autoSend: false
+
+    - kind: ParseValue
+      id: parse_title
+      input: "=Local.report_title_response"
+      output:
+        saveAs: report_info
+        format: json
+
+    # Step 3.2: Send status update to user
+    - kind: SendMessage
+      id: notify_start
+      message: |
+        # 📋 Research Started
+        
+        **Title:** {Local.report_info.title}
+        
+        **Description:** {Local.report_info.description}
+        
+        **Research configuration:**
+        - Depth: {Local.depth} iterations
+        - Breadth: {Local.breadth} queries per iteration
+        
+        The research is now in progress. This may take several minutes depending on depth and breadth settings.
+        
+        ---
+        
+        ⏳ Starting research loop...
+
+    # =========================================================================
+    # PHASE 4: RECURSIVE RESEARCH LOOP
+    # =========================================================================
+
+    # Jump to research iteration
+    - kind: GoTo
+      id: start_research_loop
+      target: research_iteration
+
+    # --- Research Iteration Entry Point ---
+    - kind: SetVariable
+      id: research_iteration
+      variable:
+        name: iteration_status
+        type: string
+        value: "checking"
+
+    # Step 4.1: Check if we should continue iterating
+    - kind: If
+      id: check_depth_reached
+      condition: "=Local.current_iteration >= Local.depth"
+      then:
+        # Depth reached - proceed to report generation
+        - kind: GoTo
+          id: goto_report
+          target: generate_final_report
+      else:
+        # Step 4.2: Increment iteration counter
+        - kind: SetVariable
+          id: increment_iteration
+          variable:
+            name: current_iteration
+            type: number
+            value: "=Local.current_iteration + 1"
+
+        - kind: SendMessage
+          id: notify_iteration
+          message: |
+            🔄 **Research Iteration {Local.current_iteration} of {Local.depth}**
+            
+            Generating search queries...
+
+        # Step 4.3: Generate SERP queries using AI agent
+        - kind: InvokeAzureAgent
+          id: serp_query_agent
+          agent:
+            name: SERPQueryAgent
+            ref: agents/serp-query-agent.yaml
+          input:
+            messages: |
+              =Concatenate(
+                "Given the following prompt from the user, generate a list of SERP queries to research the topic.",
+                Char(10),
+                "Reduce the number of words in each query to its keywords only.",
+                Char(10),
+                "Return a maximum of ", Text(Local.breadth), " queries, but feel free to return less if the original prompt is clear.",
+                Char(10),
+                "Make sure each query is unique and not similar to each other:",
+                Char(10),
+                "<prompt>", Local.enriched_research_query, "</prompt>",
+                If(CountRows(Local.all_learnings) > 0,
+                  Concatenate(Char(10), Char(10), "Here are some learnings from previous research, use them to generate more specific queries:", Char(10),
+                    Concat(Local.all_learnings, Concatenate("* ", Value, Char(10)))),
+                  ""
+                )
+              )
+          output:
+            saveResponseAs: serp_queries_response
+            autoSend: false
+
+        - kind: ParseValue
+          id: parse_serp_queries
+          input: "=Local.serp_queries_response"
+          output:
+            saveAs: serp_queries
+            format: json
+
+        # Step 4.4: Process each SERP query
+        - kind: ForEach
+          id: process_each_query
+          items: "=Local.serp_queries.queries"
+          itemVariable: serp_item
+          indexVariable: query_index
+          actions:
+            - kind: SendMessage
+              id: notify_search
+              message: |
+                🔍 Searching: {Local.serp_item.query}
+                
+                Research goal: {Local.serp_item.researchGoal}
+
+            # Call WebSearchAgent to search and extract web content
+            - kind: InvokeAzureAgent
+              id: web_search_agent
+              agent:
+                name: WebSearchAgent
+                ref: agents/web-search-agent.yaml
+              input:
+                messages: "=Concatenate(\"Search the web for: \", Local.serp_item.query, Char(10), Char(10), \"Research goal: \", Local.serp_item.researchGoal, Char(10), Char(10), \"Extract the main content from the top results and return URLs of sources.\")"
+              output:
+                saveResponseAs: web_content
+                autoSend: false
+
+            # Call LearningsAgent to extract learnings from web content
+            - kind: InvokeAzureAgent
+              id: learnings_agent
+              agent:
+                name: LearningsAgent
+                ref: agents/learnings-agent.yaml
+              input:
+                messages: |
+                  =Concatenate(
+                    "Given the following contents from a SERP search for the query <query>", Local.serp_item.query, "</query>, ",
+                    "generate a list of learnings from the contents. Return a maximum of 3 learnings, but feel free to return less if the contents are clear.",
+                    Char(10), Char(10),
+                    "Make sure each learning is unique and not similar to each other. ",
+                    "The learnings should be concise and to the point, as detailed and information dense as possible. ",
+                    "Make sure to include any entities like people, places, companies, products, things, etc., ",
+                    "as well as any exact metrics, numbers, or dates. ",
+                    "The learnings will be used to research the topic further.",
+                    Char(10), Char(10),
+                    "<contents>", Char(10), Local.web_content, Char(10), "</contents>"
+                  )
+              output:
+                saveResponseAs: learnings_response
+                autoSend: false
+
+            - kind: ParseValue
+              id: parse_learnings
+              input: "=Local.learnings_response"
+              output:
+                saveAs: extracted_learnings
+                format: json
+
+            # ACCUMULATE learnings to master array
+            - kind: SetVariable
+              id: accumulate_learnings
+              variable:
+                name: all_learnings
+                type: array
+                value: "=Concat(Local.all_learnings, Local.extracted_learnings.learnings)"
+
+            # Store follow-up questions for next iteration
+            - kind: SetVariable
+              id: store_followup
+              variable:
+                name: latest_followup_questions
+                type: array
+                value: "=Local.extracted_learnings.follow_up_questions"
+
+        # Step 4.5: Update query for next iteration based on follow-up questions
+        - kind: SetVariable
+          id: update_query_for_next
+          variable:
+            name: enriched_research_query
+            type: string
+            value: |
+              =Concatenate(
+                "Previous research goal: ", Local.enriched_research_query, Char(10), Char(10),
+                "Follow-up research directions based on learnings:", Char(10),
+                If(CountRows(Local.latest_followup_questions) > 0,
+                  Concat(Local.latest_followup_questions, Concatenate("- ", Value, Char(10))),
+                  "- Continue exploring the topic in more depth"
+                )
+              )
+
+        # Step 4.6: Loop back for next iteration
+        - kind: GoTo
+          id: continue_loop
+          target: research_iteration
+
+    # =========================================================================
+    # PHASE 5: REPORT GENERATION
+    # =========================================================================
+
+    - kind: SetVariable
+      id: generate_final_report
+      variable:
+        name: report_status
+        type: string
+        value: "generating"
+
+    - kind: SendMessage
+      id: notify_report_generation
+      message: |
+        ✅ **Research Complete!**
+        
+        Collected **{CountRows(Local.all_learnings)}** learnings across **{Local.current_iteration}** iterations.
+        
+        📝 Generating comprehensive report...
+
+    # Step 5.1: Generate final report using ReportAgent
+    - kind: InvokeAzureAgent
+      id: report_agent
+      agent:
+        name: ReportAgent
+        ref: agents/report-agent.yaml
+      input:
+        messages: |
+          =Concatenate(
+            "You are an expert and insightful researcher.", Char(10),
+            "Given the following prompt from the user, write a final report on the topic using the learnings from research.", Char(10),
+            "Make it as detailed as possible, aim for 3 or more pages, include ALL the learnings from research.", Char(10),
+            "Format the report in markdown. Use headings, lists and tables where appropriate.", Char(10), Char(10),
+            "<prompt>", Local.enriched_research_query, "</prompt>", Char(10), Char(10),
+            "Here are all the learnings from previous research:", Char(10), Char(10),
+            "<learnings>", Char(10),
+            Concat(Local.all_learnings, Concatenate("<learning>", Value, "</learning>", Char(10))),
+            "</learnings>"
+          )
+      output:
+        saveResponseAs: final_report
+        autoSend: false
+
+    # Step 5.2: Add sources section (if URLs were collected)
+    - kind: SetVariable
+      id: format_report
+      variable:
+        name: complete_report
+        type: string
+        value: |
+          =Concatenate(
+            Local.final_report, Char(10), Char(10),
+            "---", Char(10), Char(10),
+            "## 📚 Sources", Char(10), Char(10),
+            If(CountRows(Local.all_urls) > 0,
+              Concat(Distinct(Local.all_urls, Value), Concatenate("- ", Value, Char(10))),
+              "_Sources collected during web research using Bing Search grounding._"
+            )
+          )
+
+    # Step 5.3: Send final report to user
+    - kind: SendMessage
+      id: send_report
+      message: |
+        # ✅ Research Complete
+        
+        Your comprehensive research report is ready:
+        
+        ---
+        
+        {Local.complete_report}
+
+    # Step 5.4: Show completion statistics
+    - kind: SendMessage
+      id: completion_stats
+      message: |
+        ---
+        
+        ## 📊 Research Statistics
+        
+        | Metric | Value |
+        |--------|-------|
+        | Iterations completed | {Local.current_iteration} |
+        | Total learnings collected | {CountRows(Local.all_learnings)} |
+        | Research depth setting | {Local.depth} |
+        | Research breadth setting | {Local.breadth} |
+        
+        ---
+        
+        Thank you for using DeepResearch! 🎉
+        
+        If you'd like to research another topic, just start a new conversation.
+

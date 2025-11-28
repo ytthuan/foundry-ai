@@ -1,0 +1,19 @@
+{
+  "name": "report_title",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "A short title summarizing the research topic"
+      },
+      "description": {
+        "type": "string",
+        "description": "A short description summarizing the research topic"
+      }
+    },
+    "additionalProperties": false,
+    "required": ["title", "description"]
+  }
+}

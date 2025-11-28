@@ -1,0 +1,15 @@
+{
+  "name": "report",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "report": {
+        "type": "string",
+        "description": "The comprehensive research report in Markdown format, including sections for Executive Summary, Introduction, Key Findings, Detailed Analysis, Implications and Trends, Conclusions, and Recommendations."
+      }
+    },
+    "additionalProperties": false,
+    "required": ["report"]
+  }
+}

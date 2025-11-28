@@ -1,0 +1,105 @@
+kind: workflow
+trigger:
+  kind: OnConversationStart
+  id: trigger_wf
+  actions:
+    - kind: SetMultipleVariables
+      id: action-1764298391675
+      assignments:
+        - variable: Local.currentDateTime
+          value: =Now()
+        - variable: Local.allLearnings
+          value: =[]
+        - variable: Local.currentIteration
+          value: =0
+        - variable: Local.depth
+          value: =2
+        - variable: Local.breadth
+          value: =3
+        - variable: Local.enrichedQuery
+          value: =""
+        - variable: Local.clarifyingQuestionsAndAnswers
+          value: =""
+    - kind: Question
+      variable: Local.researchQuery
+      id: action-1764304546557
+      entity: StringPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        🔬 Welcome to DeepResearch!
+
+        What would you like to research?
+
+        Please provide a detailed description of the topic.
+    - kind: InvokeAzureAgent
+      id: action-1764245863942
+      agent:
+        name: ClarifyingQuestionsAgent
+      input:
+        messages: =Local.researchQuery
+      output:
+        autoSend: true
+        responseObject: Local.clarifyingResponse
+    - kind: ConditionGroup
+      conditions:
+        - condition: =CountRows(Local.clarifyingResponse.questions) > 0
+          actions:
+            - kind: Question
+              variable: Local.responseForQuestion1
+              id: action-1764324960904
+              entity: StringPrebuiltEntity
+              skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+              prompt: "{Local.clarifyingResponse.questions[0]}"
+            - kind: Question
+              variable: Local.responseForQuestion2
+              id: action-1764325043455
+              entity: StringPrebuiltEntity
+              skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+              prompt: "{Local.clarifyingResponse.questions[1]}"
+            - kind: Question
+              variable: Local.responseForQuestion3
+              id: action-1764325070003
+              entity: StringPrebuiltEntity
+              skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+              prompt: "{Local.clarifyingResponse.questions[2]}"
+            - kind: SetVariable
+              id: action-1764315486032
+              variable: Local.enrichedQuery
+              value: |-
+                =Concatenate(
+                  "Q1: ", Local.clarifyingResponse.questions[0], Char(10),
+                  "A1: ", Local.responseForQuestion1, Char(10), Char(10),
+                  "Q2: ", Local.clarifyingResponse.questions[1], Char(10),
+                  "A2: ", Local.responseForQuestion2, Char(10), Char(10),
+                  "Q3: ", Local.clarifyingResponse.questions[2], Char(10),
+                  "A3: ", Local.responseForQuestion3
+                )
+          id: if-action-1764305081850-0
+      id: action-1764305081850
+      elseActions:
+        - kind: SetVariable
+          id: action-1764305693700
+          variable: Local.enrichedQuery
+          value: =Local.researchQuery
+    - kind: InvokeAzureAgent
+      id: action-1764305887884
+      agent:
+        name: ReportTitleAgent
+      input:
+        messages: =Local.enrichedQuery
+      output:
+        autoSend: true
+        responseObject: Local.reportInfo
+    - kind: SendActivity
+      activity: |-
+        📋 Research Started
+
+        Title: {Local.reportInfo.title}
+        Description:{Local.reportInfo.description}
+        Question and Answer:
+        {Local.enrichedQuery}
+        Research in progress...
+      id: action-1764305989123
+id: ""
+name: Deep-Research-Agent
+description: ""
