@@ -2,10 +2,21 @@
 
 ## Project Overview
 This is a **Microsoft Foundry workflow** that replicates OpenAI's DeepResearch feature using recursive AI agents. The project consists of:
-- A main workflow (`ai-foundry-new/deep-research-workflow.yaml`) orchestrating multi-step research
+- **`ai-foundry-new/current-deep-research-workflow.yaml`** - The **current working implementation** that is actually deployed and running with Microsoft Foundry
+- **`ai-foundry-new/deep-research-workflow.yaml`** - A **conversion/reference file** being ported from the original n8n workflow (see below); this is a work-in-progress and may not be fully functional
+- **`n8n-workflow/deep-research.json`** - The **original n8n workflow** that `deep-research-workflow.yaml` is being converted from
 - Six specialized agents in `ai-foundry-new/agents/` for clarifying questions, SERP queries, web search, learning extraction, and report generation
 - JSON schemas in `ai-foundry-new/schemas/` for structured agent outputs
-- Original n8n workflow reference in `n8n-workflow/deep-research.json`
+
+## Important: Workflow File Distinction
+| File | Status | Purpose |
+|------|--------|---------|
+| `current-deep-research-workflow.yaml` | ✅ **Working** | The actual production workflow running on Microsoft Foundry |
+| `deep-research-workflow.yaml` | 🔄 **In Progress** | Conversion from n8n JSON to Foundry YAML format |
+| `deep-research.json` (n8n) | 📋 **Reference** | Original source workflow being converted |
+
+When making changes to the **production workflow**, edit `current-deep-research-workflow.yaml`.
+When working on the **n8n conversion**, edit `deep-research-workflow.yaml` and reference `deep-research.json`.
 
 ## Architecture & Data Flow
 ```
