@@ -15,7 +15,7 @@ instructions: |
   and extract relevant content from the search results.
   
   When given a search query:
-  1. Use the Bing Search tool to find relevant web pages
+  1. Use the Web Search tool to find relevant web pages
   2. Extract the main content from the top results
   3. Summarize the key information found
   4. Include source URLs for attribution
@@ -30,14 +30,15 @@ instructions: |
   for learning extraction.
 
 tools:
-  # Bing Search Grounding - enables web search capability
-  - type: bing_grounding
-    id: bing_search
-    description: "Search the web using Bing"
+  # Web Search - enables web search capability
+  - type: web_search
+    id: web
+    description: "Search the web using web search tool"
   
   # File Search - if using Azure AI Search index
   # - type: file_search
   #   id: knowledge_search
+
   #   description: "Search internal knowledge base"
 
 settings:

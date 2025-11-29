@@ -288,7 +288,7 @@ The Deep Research workflow performs the following steps:
 
 ```
 ai-foundry-new/
-├── deep-research-workflow.yaml    # Main workflow definition
+├── current-deep-research-workflow.yaml    # Main workflow definition
 ├── agents/
 │   ├── clarifying-questions-agent.yaml  # Generates clarifying questions
 │   ├── serp-query-agent.yaml            # Generates search queries
@@ -326,7 +326,7 @@ AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o-mini
 2. Navigate to your project
 3. Select **Build** > **Workflows**
 4. Select **Create new workflow** > **Import from YAML**
-5. Upload `deep-research-workflow.yaml`
+5. Upload `current-deep-research-workflow.yaml`
 6. Configure agent references to point to deployed agents
 7. Save and test the workflow
 

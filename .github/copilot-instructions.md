@@ -3,8 +3,7 @@
 ## Project Overview
 This is a **Microsoft Foundry workflow** that replicates OpenAI's DeepResearch feature using recursive AI agents. The project consists of:
 - **`ai-foundry-new/current-deep-research-workflow.yaml`** - The **current working implementation** that is actually deployed and running with Microsoft Foundry
-- **`ai-foundry-new/deep-research-workflow.yaml`** - A **conversion/reference file** being ported from the original n8n workflow (see below); this is a work-in-progress and may not be fully functional
-- **`n8n-workflow/deep-research.json`** - The **original n8n workflow** that `deep-research-workflow.yaml` is being converted from
+- **`n8n-workflow/deep-research.json`** - The **original n8n workflow** 
 - Six specialized agents in `ai-foundry-new/agents/` for clarifying questions, SERP queries, web search, learning extraction, and report generation
 - JSON schemas in `ai-foundry-new/schemas/` for structured agent outputs
 
@@ -12,11 +11,9 @@ This is a **Microsoft Foundry workflow** that replicates OpenAI's DeepResearch f
 | File | Status | Purpose |
 |------|--------|---------|
 | `current-deep-research-workflow.yaml` | ✅ **Working** | The actual production workflow running on Microsoft Foundry |
-| `deep-research-workflow.yaml` | 🔄 **In Progress** | Conversion from n8n JSON to Foundry YAML format |
 | `deep-research.json` (n8n) | 📋 **Reference** | Original source workflow being converted |
 
 When making changes to the **production workflow**, edit `current-deep-research-workflow.yaml`.
-When working on the **n8n conversion**, edit `deep-research-workflow.yaml` and reference `deep-research.json`.
 
 ## Architecture & Data Flow
 ```
@@ -61,6 +58,9 @@ The workflow uses Power Fx (not JavaScript) for expressions:
 - Conditionals: `If(condition, trueVal, falseVal)`
 - Array ops: `CountRows()`, `Concat()`, `Distinct()`
 - Prefix expressions with `=` in YAML values
+
+### ⚠️ CRITICAL: No Comments in Workflow YAML Files
+**Do NOT add YAML comments (`#`) to workflow `.yaml` files.** Comments can break the Foundry workflow parser and cause syntax errors. Keep workflow files clean without inline or block comments.
 
 ### Variable Scoping
 - `Local.variableName` - access workflow variables
@@ -113,45 +113,55 @@ This pattern applies to ALL agents with complex structured outputs. Always use p
 ### ⚠️ KNOWN ISSUE: ForEach Node Limitation
 **Do NOT use `ForEach` nodes** in Foundry workflows - they are currently unreliable/unsupported.
 
-**Instead, use the Iterator Pattern with GoTo:**
-```yaml
-# Initialize iterator before loop
-- kind: SetVariable
-  id: init_query_index
-  variable: Local.queryIndex
-  value: =0
+**Instead, use the Iterator Pattern with ConditionGroup + GotoAction:**
 
-# Loop target - check if more items to process
+The pattern involves:
+1. Initialize iterator to 0 in `SetMultipleVariables`
+2. Get total count before the loop
+3. Use `ConditionGroup` as the loop target with compound condition
+4. Increment iterator **first**, then access item (makes `Index()` 1-based naturally)
+5. Use `GotoAction` with `actionId` to loop back to the `ConditionGroup`
+
+```yaml
 - kind: SetVariable
-  id: query_loop_start
-  variable: Local.queryLoopStatus
-  value: ="checking"
+  id: action-get-total
+  variable: Local.total_items
+  value: '=CountRows(Local.response.items)'
 
 - kind: ConditionGroup
-  id: check_more_queries
   conditions:
-    - condition: =Local.queryIndex >= CountRows(Local.serpQueries.queries)
-      actions: []  # Exit loop - all items processed
-  elseActions:
-    # Process current item using Index()
-    - kind: SetVariable
-      variable: Local.currentQuery
-      value: =Index(Local.serpQueries.queries, Local.queryIndex + 1)
-    
-    # ... do work with Local.currentQuery ...
-    
-    # Increment and loop back
-    - kind: SetVariable
-      variable: Local.queryIndex
-      value: =Local.queryIndex + 1
-    - kind: GoTo
-      target: query_loop_start
+    - condition: '=((Local.total_items > 0) && (Local.iterator < Local.total_items))'
+      actions:
+        - kind: SetVariable
+          id: action-increment
+          variable: Local.iterator
+          value: '=Local.iterator + 1'
+        - kind: SetVariable
+          id: action-get-current
+          variable: Local.current_item
+          value: '=Index(Local.response.items, Local.iterator).Value'
+        - kind: GotoAction
+          actionId: loop-condition-id
+          id: action-loop-back
+      id: if-has-more-items
+    - condition: '=Local.total_items = 0'
+      actions:
+        - kind: SetVariable
+          id: action-fallback
+          variable: Local.current_item
+          value: '=Local.fallback_value'
+      id: if-no-items
+  id: loop-condition-id
+  elseActions: []
 ```
 
 **Key points:**
-- Use `Index(array, position)` where position is 1-based
-- Increment counter before `GoTo` to avoid infinite loops
-- Name loop targets descriptively (e.g., `query_loop_start`)
+- Use `Index(array, position).Value` where position is 1-based
+- Increment iterator **before** accessing with `Index()` (iterator goes 0→1→2, `Index()` uses 1→2→3)
+- Use compound condition `((count > 0) && (iterator < count))` to handle empty arrays
+- Use `GotoAction` with `actionId` (not `GoTo` with `target`)
+- The `ConditionGroup` node ID serves as the loop target
+- Add a fallback condition for empty arrays if needed
 
 ## Adding New Agents
 1. Create YAML in `ai-foundry-new/agents/<name>-agent.yaml`
