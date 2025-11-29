@@ -129,15 +129,19 @@ Think of it as having a research assistant who:
 │   ┌───────────────────────────────▼──────────────────────────────────────┐ │
 │   │ 🤖 SERPQueryAgent generates search queries (up to "breadth" = 3)     │ │
 │   │                                                                      │ │
-│   │ Example output:                                                      │ │
-│   │ [                                                                    │ │
-│   │   { query: "sugar brain effects long-term adults",                   │ │
-│   │     researchGoal: "Find studies on chronic sugar consumption..." },  │ │
-│   │   { query: "glucose cognitive function research",                    │ │
-│   │     researchGoal: "Explore how glucose affects brain activity..." }, │ │
-│   │   { query: "sugar addiction brain dopamine",                         │ │
-│   │     researchGoal: "Investigate neurological addiction pathways..." } │ │
-│   │ ]                                                                    │ │
+│   │ Example output (parallel arrays for Foundry compatibility):          │ │
+│   │ {                                                                    │ │
+│   │   "queries": [                                                       │ │
+│   │     "sugar brain effects long-term adults",                          │ │
+│   │     "glucose cognitive function research",                           │ │
+│   │     "sugar addiction brain dopamine"                                 │ │
+│   │   ],                                                                 │ │
+│   │   "research_goals": [                                                │ │
+│   │     "Find studies on chronic sugar consumption...",                  │ │
+│   │     "Explore how glucose affects brain activity...",                 │ │
+│   │     "Investigate neurological addiction pathways..."                 │ │
+│   │   ]                                                                  │ │
+│   │ }                                                                    │ │
 │   └───────────────────────────────┬──────────────────────────────────────┘ │
 │                                   │                                        │
 │   ┌───────────────────────────────▼──────────────────────────────────────┐ │
@@ -396,9 +400,19 @@ azd up
 Generates follow-up questions to refine the research direction. Outputs JSON with a `questions` array (max 3 questions).
 
 ### SERPQueryAgent
-Creates web search queries based on the research topic. Each query includes:
-- `query`: The search keywords
-- `researchGoal`: What this query aims to discover
+Creates web search queries based on the research topic. Returns **parallel arrays** (due to Foundry's limitation with nested objects):
+- `queries`: Array of search keyword strings
+- `research_goals`: Array of corresponding research goals (same index = same pair)
+
+**Example output:**
+```json
+{
+  "queries": ["sugar brain effects long-term", "glucose cognitive function"],
+  "research_goals": ["Find studies on chronic consumption", "Explore brain activity effects"]
+}
+```
+
+Access in workflow: `Index(Local.serpQueries.queries, 1)` paired with `Index(Local.serpQueries.research_goals, 1)`
 
 Uses previous learnings to generate more targeted, specific queries in later iterations.
 
@@ -479,6 +493,10 @@ Each agent's instructions can be customized in their respective YAML files. Key 
 4. **Web search fails**: Verify Bing Search resource is configured in your Foundry project
 
 5. **JSON parse errors**: Check agent response format configuration and ensure `strict: true` in JSON schemas
+
+6. **Empty objects in arrays `[{}, {}, {}]`**: Foundry's `responseObject` doesn't handle nested objects in arrays. Convert to parallel flat arrays:
+   - ❌ `{ "items": [{ "name": "x", "goal": "y" }] }`
+   - ✅ `{ "names": ["x"], "goals": ["y"] }`
 
 ### Debugging
 

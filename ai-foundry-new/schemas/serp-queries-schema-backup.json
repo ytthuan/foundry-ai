@@ -1,0 +1,34 @@
+{
+  "name": "serp_queries",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "queries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The SERP query (keywords only)"
+            },
+            "research_goal": {
+              "type": "string",
+              "description": "The goal of the research that this query is meant to accomplish, including additional research directions."
+            }
+          },
+          "required": [
+            "query",
+            "research_goal"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "queries"
+    ]
+  },
+  "strict": true
+}

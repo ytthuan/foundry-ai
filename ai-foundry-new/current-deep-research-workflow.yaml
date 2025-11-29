@@ -18,7 +18,23 @@ trigger:
           value: =3
         - variable: Local.enrichedQuery
           value: =""
-        - variable: Local.clarifyingQuestionsAndAnswers
+        - variable: Local.serpQueries
+          value: ={}
+        - variable: Local.queryIndex
+          value: =0
+        - variable: Local.queryLoopStatus
+          value: =""
+        - variable: Local.currentQuery
+          value: =""
+        - variable: Local.currentResearchGoal
+          value: =""
+        - variable: Local.webSearchResults
+          value: =""
+        - variable: Local.learningsResponse
+          value: ={}
+        - variable: Local.latestFollowups
+          value: =[]
+        - variable: Local.iterationStatus
           value: =""
     - kind: Question
       variable: Local.researchQuery
@@ -49,29 +65,29 @@ trigger:
               id: action-1764324960904
               entity: StringPrebuiltEntity
               skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-              prompt: "{Local.clarifyingResponse.questions[0]}"
+              prompt: "{Index(Local.clarifyingResponse.questions, 1).Value}"
             - kind: Question
               variable: Local.responseForQuestion2
               id: action-1764325043455
               entity: StringPrebuiltEntity
               skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-              prompt: "{Local.clarifyingResponse.questions[1]}"
+              prompt: "{Index(Local.clarifyingResponse.questions, 2).Value}"
             - kind: Question
               variable: Local.responseForQuestion3
               id: action-1764325070003
               entity: StringPrebuiltEntity
               skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-              prompt: "{Local.clarifyingResponse.questions[2]}"
+              prompt: "{Index(Local.clarifyingResponse.questions, 3).Value}"
             - kind: SetVariable
               id: action-1764315486032
               variable: Local.enrichedQuery
               value: |-
                 =Concatenate(
-                  "Q1: ", Local.clarifyingResponse.questions[0], Char(10),
+                  "Q1: ", Index(Local.clarifyingResponse.questions, 1).Value, Char(10),
                   "A1: ", Local.responseForQuestion1, Char(10), Char(10),
-                  "Q2: ", Local.clarifyingResponse.questions[1], Char(10),
+                  "Q2: ", Index(Local.clarifyingResponse.questions, 2).Value, Char(10),
                   "A2: ", Local.responseForQuestion2, Char(10), Char(10),
-                  "Q3: ", Local.clarifyingResponse.questions[2], Char(10),
+                  "Q3: ", Index(Local.clarifyingResponse.questions, 3).Value, Char(10),
                   "A3: ", Local.responseForQuestion3
                 )
           id: if-action-1764305081850-0
@@ -92,14 +108,128 @@ trigger:
         responseObject: Local.reportInfo
     - kind: SendActivity
       activity: |-
-        📋 Research Started
-
-        Title: {Local.reportInfo.title}
-        Description:{Local.reportInfo.description}
-        Question and Answer:
-        {Local.enrichedQuery}
-        Research in progress...
+        # 📋 Research Started
+            
+            **Title:** {Local.reportInfo.title}
+            **Description:** {Local.reportInfo.description}
+            
+            **Research configuration:**
+            - Depth: {Local.depth} iterations
+            - Breadth: {Local.breadth} queries per iteration
       id: action-1764305989123
+    - kind: SetVariable
+      id: research_iteration
+      variable: Local.iterationStatus
+      value: ="checking"
+    - kind: ConditionGroup
+      conditions:
+        - condition: =Local.currentIteration >= Local.depth
+          actions: []
+          id: if-action-1764333163829-0
+      id: check_depth_reached
+      elseActions:
+        - kind: SetVariable
+          id: increment_iteration
+          variable: Local.currentIteration
+          value: =Local.currentIteration + 1
+        - kind: SendActivity
+          activity: |-
+            🔄 **Research Iteration {Local.currentIteration} of {Local.depth}**
+
+            Generating search queries...
+          id: notify_iteration
+        - kind: InvokeAzureAgent
+          id: serp_query_agent
+          agent:
+            name: SERPQueryAgent
+          input:
+            messages: =Local.enrichedQuery
+          output:
+            autoSend: false
+            responseObject: Local.serpQueries
+        - kind: SendActivity
+          activity: |-
+            📝 Generated {CountRows(Local.serpQueries.queries)} search queries
+          id: notify_queries_generated
+        - kind: SetVariable
+          id: init_query_index
+          variable: Local.queryIndex
+          value: =0
+    - kind: SetVariable
+      id: query_loop_start
+      variable: Local.queryLoopStatus
+      value: ="processing"
+    - kind: ConditionGroup
+      id: check_more_queries
+      conditions:
+        - condition: =Local.queryIndex >= CountRows(Local.serpQueries.queries)
+          actions:
+            - kind: SendActivity
+              activity: |-
+                ✅ Completed iteration {Local.currentIteration} of {Local.depth}
+                📊 Total learnings: {CountRows(Local.allLearnings)}
+              id: notify_iteration_complete
+            - kind: GoTo
+              target: research_iteration
+              id: goto_next_iteration
+          id: if-all-queries-done
+      elseActions:
+        - kind: SetVariable
+          id: get_current_query
+          variable: Local.currentQuery
+          value: =Index(Local.serpQueries.queries, Local.queryIndex + 1)
+        - kind: SetVariable
+          id: get_current_goal
+          variable: Local.currentResearchGoal
+          value: =Index(Local.serpQueries.research_goals, Local.queryIndex + 1)
+        - kind: SendActivity
+          activity: |-
+            🔍 Searching ({Local.queryIndex + 1}/{CountRows(Local.serpQueries.queries)}): {Local.currentQuery}
+          id: notify_search_start
+        - kind: InvokeAzureAgent
+          id: web_search_agent
+          agent:
+            name: WebSearchAgent
+          input:
+            messages: =Local.currentQuery
+          output:
+            autoSend: false
+            responseString: Local.webSearchResults
+        - kind: InvokeAzureAgent
+          id: learnings_agent
+          agent:
+            name: LearningsAgent
+          input:
+            messages: |-
+              =Concatenate(
+                "Research Query: ", Local.currentQuery, Char(10),
+                "Research Goal: ", Local.currentResearchGoal, Char(10), Char(10),
+                "Web Content:", Char(10), Local.webSearchResults
+              )
+          output:
+            autoSend: false
+            responseObject: Local.learningsResponse
+        - kind: SetVariable
+          id: accumulate_learnings
+          variable: Local.allLearnings
+          value: =Concat(Local.allLearnings, Local.learningsResponse.learnings)
+        - kind: SetVariable
+          id: store_followups
+          variable: Local.latestFollowups
+          value: =Local.learningsResponse.follow_up_questions
+        - kind: SendActivity
+          activity: |-
+            📚 Extracted {CountRows(Local.learningsResponse.learnings)} learnings
+          id: notify_learnings_extracted
+        - kind: SetVariable
+          id: increment_query_index
+          variable: Local.queryIndex
+          value: =Local.queryIndex + 1
+        - kind: GoTo
+          target: query_loop_start
+          id: goto_next_query
+    - kind: EndConversation
+      id: action-1764334560494
 id: ""
 name: Deep-Research-Agent
 description: ""

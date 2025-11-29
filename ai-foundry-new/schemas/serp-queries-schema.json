@@ -6,24 +6,22 @@
     "properties": {
       "queries": {
         "type": "array",
+        "description": "Array of SERP query strings (keywords only)",
         "items": {
-          "type": "object",
-          "properties": {
-            "query": {
-              "type": "string",
-              "description": "The SERP query (keywords only)"
-            },
-            "research_goal": {
-              "type": "string",
-              "description": "The goal of the research that this query is meant to accomplish, including additional research directions."
-            }
-          },
-          "required": ["query", "research_goal"],
-          "additionalProperties": false
-        }
+          "type": "string"
+        },
+        "maxItems": 10
+      },
+      "research_goals": {
+        "type": "array",
+        "description": "Array of research goals corresponding to each query (same order)",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 10
       }
     },
     "additionalProperties": false,
-    "required": ["queries"]
+    "required": ["queries", "research_goals"]
   }
 }

@@ -37,9 +37,9 @@ instructions: |
   If previous learnings are provided, use them to generate more specific and targeted queries
   that build upon what has already been discovered.
 
-  You must respond with a JSON object containing a "queries" array, where each item has:
-  - "query": The search keywords
-  - "research_goal": What you hope to learn from this query and how to advance the research
+  You must respond with a JSON object containing two arrays:
+  - "queries": An array of search keyword strings
+  - "research_goals": An array of corresponding research goals (same order as queries)
 
 response_format:
   type: json_schema
@@ -51,21 +51,19 @@ response_format:
       properties:
         queries:
           type: array
+          description: "Array of SERP query strings (keywords only)"
           items:
-            type: object
-            properties:
-              query:
-                type: string
-                description: "The SERP query (keywords only)"
-              research_goal:
-                type: string
-                description: "The goal of the research that this query is meant to accomplish, including additional research directions."
-            required:
-              - query
-              - research_goal
-            additionalProperties: false
+            type: string
+          maxItems: 10
+        research_goals:
+          type: array
+          description: "Array of research goals corresponding to each query (same order)"
+          items:
+            type: string
+          maxItems: 10
       required:
         - queries
+        - research_goals
       additionalProperties: false
 
 tools: []

@@ -73,15 +73,85 @@ The workflow uses Power Fx (not JavaScript) for expressions:
 - Use `additionalProperties: false` to prevent extra fields
 - Array items need `maxItems` constraints (typically 3)
 
+### ⚠️ CRITICAL: Flat JSON Structure Requirement
+Foundry's `responseObject` binding **does NOT properly handle arrays of nested objects**. The nested properties get stripped, leaving empty `{}` objects.
+
+**❌ DON'T USE (nested objects in arrays):**
+```json
+{
+  "queries": [
+    { "query": "search terms", "research_goal": "goal description" }
+  ]
+}
+```
+
+**✅ USE (parallel flat arrays):**
+```json
+{
+  "queries": ["search terms 1", "search terms 2"],
+  "research_goals": ["goal 1", "goal 2"]
+}
+```
+
+**Accessing paired data in Power Fx:**
+```
+Index(Local.serpQueries.queries, 1)         // First query
+Index(Local.serpQueries.research_goals, 1)  // Corresponding goal
+```
+
+This pattern applies to ALL agents with complex structured outputs. Always use parallel arrays of primitives instead of arrays of objects.
+
 ## Workflow Node Types
 | Node | Purpose | Example Usage |
 |------|---------|---------------|
 | `InvokeAzureAgent` | Call AI agent | `ref: agents/clarifying-questions-agent.yaml` |
 | `SetVariable` | Store data | Variable initialization, accumulation |
 | `ParseValue` | Parse JSON | Convert agent string response to object |
-| `ForEach` | Iterate arrays | Process multiple SERP queries |
 | `GoTo` | Control flow | Recursive loop back to `research_iteration` |
-| `If` | Conditional | Check `current_iteration >= depth` |
+| `ConditionGroup` | Conditional | Check `current_iteration >= depth` |
+
+### ⚠️ KNOWN ISSUE: ForEach Node Limitation
+**Do NOT use `ForEach` nodes** in Foundry workflows - they are currently unreliable/unsupported.
+
+**Instead, use the Iterator Pattern with GoTo:**
+```yaml
+# Initialize iterator before loop
+- kind: SetVariable
+  id: init_query_index
+  variable: Local.queryIndex
+  value: =0
+
+# Loop target - check if more items to process
+- kind: SetVariable
+  id: query_loop_start
+  variable: Local.queryLoopStatus
+  value: ="checking"
+
+- kind: ConditionGroup
+  id: check_more_queries
+  conditions:
+    - condition: =Local.queryIndex >= CountRows(Local.serpQueries.queries)
+      actions: []  # Exit loop - all items processed
+  elseActions:
+    # Process current item using Index()
+    - kind: SetVariable
+      variable: Local.currentQuery
+      value: =Index(Local.serpQueries.queries, Local.queryIndex + 1)
+    
+    # ... do work with Local.currentQuery ...
+    
+    # Increment and loop back
+    - kind: SetVariable
+      variable: Local.queryIndex
+      value: =Local.queryIndex + 1
+    - kind: GoTo
+      target: query_loop_start
+```
+
+**Key points:**
+- Use `Index(array, position)` where position is 1-based
+- Increment counter before `GoTo` to avoid infinite loops
+- Name loop targets descriptively (e.g., `query_loop_start`)
 
 ## Adding New Agents
 1. Create YAML in `ai-foundry-new/agents/<name>-agent.yaml`
