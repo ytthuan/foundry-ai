@@ -170,8 +170,10 @@ The pattern involves:
 4. Use shared instruction preamble from existing agents (researcher persona)
 
 ## Common Patterns
-- **Accumulator pattern**: Use array variables (`all_learnings`) with `Concat()` to aggregate across iterations
+- **Accumulator pattern**: Use string variables (`all_learnings`, `all_iteration_followups`) with `Concatenate()` and `Concat()` to aggregate across iterations
+- **Follow-up accumulation**: Reset `all_iteration_followups` at the start of each depth iteration, then append follow-ups from every query in the breadth loop
 - **Agent output handling**: Always `saveResponseAs` then `ParseValue` before accessing structured data
+- **Message table to text**: When using `messages:` output type, convert to text with `Concat(Local.messages_var, Text, Char(10))`
 - **Iteration control**: `current_iteration` counter with `GoTo` for recursive loops
 
 ## Environment Setup

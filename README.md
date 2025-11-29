@@ -174,17 +174,20 @@ Think of it as having a research assistant who:
 │   │   └───────────────────────────┬─────────────────────────────────┘   │ │
 │   │                               │                                      │ │
 │   │   ┌───────────────────────────▼─────────────────────────────────┐   │ │
-│   │   │ 📦 ACCUMULATE learnings to all_learnings array              │   │ │
+│   │   │ 📦 ACCUMULATE learnings to all_learnings                     │   │ │
+│   │   │    ACCUMULATE follow-ups to all_iteration_followups          │   │ │
 │   │   │                                                             │   │ │
-│   │   │ After 3 queries: all_learnings now has ~9 learnings         │   │ │
+│   │   │ After 3 queries:                                            │   │ │
+│   │   │ • all_learnings has ~9 learnings                            │   │ │
+│   │   │ • all_iteration_followups has ~9 follow-up questions        │   │ │
 │   │   └─────────────────────────────────────────────────────────────┘   │ │
 │   │                                                                      │ │
 │   └──────────────────────────────────────────────────────────────────────┘ │
 │                                   │                                        │
-│   ┌───────────────────────────────▼──────────────────────────────────────┐ │
-│   │ Update enrichedQuery with follow-up questions for next iteration    │ │
-│   │ "Previous research goal: ... + Follow-up: What is BDNF mechanism?"  │ │
-│   └───────────────────────────────┬──────────────────────────────────────┘ │
+│   ┌───────────────────────────▼──────────────────────────────────────┐ │
+│   │ Update enrichedQuery with ALL follow-up questions from iteration │ │
+│   │ (accumulated from all queries, not just the last one)            │ │
+│   └───────────────────────────┬──────────────────────────────────────┘ │
 │                                   │                                        │
 │                                   ▼                                        │
 │   ┌──────────────────────────────────────────────────────────────────────┐ │
@@ -265,6 +268,46 @@ The most important technical concept in this workflow is the **accumulator patte
   variable: Local.allAnswers
   value: =Concatenate(Local.allAnswers, Local.currentAnswer, Char(10))
   # All answers are kept!
+```
+
+### Follow-up Question Accumulation Pattern
+
+For accumulating follow-up questions across the breadth loop (all queries in one iteration):
+
+```yaml
+# Reset at start of each depth iteration
+- kind: SetVariable
+  id: reset_iteration_followups
+  variable: Local.all_iteration_followups
+  value: =""
+
+# Inside query loop - APPEND follow-ups from each query
+- kind: SetVariable
+  id: accumulate_followups
+  variable: Local.all_iteration_followups
+  value: =Concatenate(Local.all_iteration_followups, Concat(Local.learnings_response.follow_up_questions, Value, Char(10)), Char(10))
+
+# After query loop - use ALL accumulated follow-ups
+- kind: SetVariable
+  id: update_enriched_query  
+  variable: Local.enriched_query
+  value: =Concatenate(Local.enriched_query, Char(10), "Follow-up Questions:", Char(10), Trim(Local.all_iteration_followups))
+```
+
+### Message Table to Text Conversion
+
+When using `messages:` output from `InvokeAzureAgent`, convert the table to text:
+
+```yaml
+# Agent returns messages as a Table
+- kind: InvokeAzureAgent
+  output:
+    messages: Local.web_search_results  # This is a Table!
+
+# Convert Table to Text before using in Concatenate
+- kind: SetVariable
+  variable: Local.learning_input
+  value: =Concatenate("Content: ", Concat(Local.web_search_results, Text, Char(10)))
 ```
 
 ---
@@ -385,14 +428,14 @@ azd up
 | Variable | Type | Description |
 |----------|------|-------------|
 | `research_query` | string | Original user query |
-| `enriched_research_query` | string | Query enhanced with clarifying answers |
-| `all_questions_and_answers` | string | Accumulated Q&A pairs from clarifying questions |
-| `depth` | number | Research depth setting (default: 2) |
-| `breadth` | number | Research breadth setting (default: 3) |
-| `all_learnings` | array | Accumulated learnings from all iterations |
-| `all_urls` | array | Source URLs collected |
+| `enriched_query` | string | Query enhanced with clarifying answers and follow-ups |
+| `all_learnings` | string | Accumulated learnings from all iterations |
+| `all_iteration_followups` | string | Accumulated follow-up questions within current iteration |
+| `depth` | number | Research depth setting (default: 1) |
+| `breadth` | number | Research breadth setting (default: 2) |
 | `current_iteration` | number | Current loop iteration |
-| `latest_followup_questions` | array | Follow-up questions from last learning extraction |
+| `latest_followups` | array | Follow-up questions from last learning extraction |
+| `web_search_results` | table | Message table from web search agent |
 
 ## Agent Descriptions
 
@@ -497,6 +540,10 @@ Each agent's instructions can be customized in their respective YAML files. Key 
 6. **Empty objects in arrays `[{}, {}, {}]`**: Foundry's `responseObject` doesn't handle nested objects in arrays. Convert to parallel flat arrays:
    - ❌ `{ "items": [{ "name": "x", "goal": "y" }] }`
    - ✅ `{ "names": ["x"], "goals": ["y"] }`
+
+7. **"Invalid argument type (Table). Expecting a Text value"**: When using `messages:` output type from `InvokeAzureAgent`, the result is a Table, not Text. Convert it using `Concat(Local.web_search_results, Text, Char(10))` before using in `Concatenate()`.
+
+8. **Only last query's follow-ups used**: Ensure you're accumulating follow-ups with `all_iteration_followups` variable that appends from each query, not just storing `latest_followups`.
 
 ### Debugging
 
