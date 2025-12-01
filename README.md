@@ -570,3 +570,6 @@ This workflow is provided as a reference implementation. Adapt as needed for you
 Try the workflow with this sample research query:
 
 Sugar effect to human brain?
+
+security in MS Foundry Workflow
+

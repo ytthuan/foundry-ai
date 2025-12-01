@@ -235,14 +235,17 @@ trigger:
                   id: create_websearch_input_message
                   variable: Local.current_query_research_goal
                   value: '=Concatenate("Query: ", Local.current_query, Char(10), "Research Goal: ", Local.current_research_goal)'
+                - kind: SendActivity
+                  activity: "Searching with: {Local.current_query_research_goal}"
+                  id: send-searching-status
                 - kind: InvokeAzureAgent
-                  id: invoke_websearch
+                  id: invoke_internal_knowledges_search
                   agent:
-                    name: WebSearchAgent
+                    name: InternalSearchAgent
                   input:
                     messages: =Local.current_query_research_goal
                   output:
-                    autoSend: false
+                    autoSend: true
                     messages: Local.web_search_results
                 - kind: SetVariable
                   id: create_input_learning_agent_message
@@ -283,5 +286,5 @@ trigger:
               actionId: research_iteration
               id: loopback-research-iteration
 id: ""
-name: Deep-Research
+name: Deep-Research-Internally
 description: ""
