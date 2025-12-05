@@ -9,17 +9,27 @@
         "description": "List of learnings extracted from the content, max of 3.",
         "items": {
           "type": "string"
-        }
+        },
+        "maxItems": 3
       },
       "follow_up_questions": {
         "type": "array",
         "description": "List of follow-up questions to research the topic further, max of 3.",
         "items": {
           "type": "string"
-        }
+        },
+        "maxItems": 3
+      },
+      "sources": {
+        "type": "array",
+        "description": "List of source URLs extracted from the content, max of 10.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 10
       }
     },
     "additionalProperties": false,
-    "required": ["learnings", "follow_up_questions"]
+    "required": ["learnings", "follow_up_questions", "sources"]
   }
 }

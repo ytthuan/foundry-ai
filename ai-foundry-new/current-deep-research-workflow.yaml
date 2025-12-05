@@ -42,6 +42,8 @@ trigger:
           value: =0
         - variable: Local.serp_input_message
           value: =""
+        - variable: Local.all_sources
+          value: =""
     - kind: Question
       variable: Local.research_query
       id: action-1764304546557
@@ -164,7 +166,7 @@ trigger:
             - kind: SetVariable
               id: set_report_input_message
               variable: Local.report_agent_message
-              value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "<prompt>", Local.enriched_query, "</prompt>", Char(10), Char(10), "Here are all the learnings from previous research:", Char(10), Char(10), "<learnings>", Char(10), "<learning>", Substitute(Trim(Local.all_learnings), Char(10), Concatenate("</learning>", Char(10), "<learning>")), "</learning>", Char(10), "</learnings>")
+              value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "<prompt>", Local.enriched_query, "</prompt>", Char(10), Char(10), "Here are all the learnings from previous research:", Char(10), Char(10), "<learnings>", Char(10), "<learning>", Substitute(Trim(Local.all_learnings), Char(10), Concatenate("</learning>", Char(10), "<learning>")), "</learning>", Char(10), "</learnings>", Char(10), Char(10), "Here are all the sources referenced during research:", Char(10), Char(10), "<sources>", Char(10), Trim(Local.all_sources), Char(10), "</sources>")
             - kind: InvokeAzureAgent
               id: invoke_report_agent
               agent:
@@ -269,6 +271,10 @@ trigger:
                   id: accumulate_followups
                   variable: Local.all_iteration_followups
                   value: =Concatenate(Local.all_iteration_followups, Concat(Local.learnings_response.follow_up_questions, Value, Char(10)), Char(10))
+                - kind: SetVariable
+                  id: accumulate_sources
+                  variable: Local.all_sources
+                  value: =Concatenate(Local.all_sources, Concat(Local.learnings_response.sources, Value, Char(10)), Char(10))
                 - kind: GotoAction
                   actionId: query_loop_condition
                   id: loop_back_to_query_loop

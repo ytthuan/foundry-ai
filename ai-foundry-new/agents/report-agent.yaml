@@ -34,6 +34,7 @@ instructions: |
   - Use headings, lists, and tables only where appropriate
   - Add context and analysis to raw facts
   - End with conclusions and actionable recommendations
+  - Include a "Sources" section at the very end with all referenced sources
 
   Format the report in Markdown with:
   - H1 (#) for the main title
@@ -42,6 +43,7 @@ instructions: |
   - Tables for comparative data
   - Bullet points for lists of items
   - Bold (**) for key terms
+  - A final "## Sources" section with numbered list of all sources used
 
 tools: []
 

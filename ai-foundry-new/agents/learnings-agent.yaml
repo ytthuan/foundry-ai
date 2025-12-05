@@ -38,9 +38,14 @@ instructions: |
   Also generate follow-up questions that could lead to deeper research on the topic.
   These questions should explore aspects not yet covered or areas that need more detail.
 
+  Additionally, extract all source URLs mentioned in the content.
+  Sources should be the actual URLs where the information was found.
+  Include the source title/description if available (format: "Title - URL" or just "URL").
+
   You must respond with a JSON object containing:
   - "learnings": Array of learning strings (max 3)
   - "follow_up_questions": Array of follow-up question strings (max 3)
+  - "sources": Array of source strings (URLs with optional titles, max 10)
 
 response_format:
   type: json_schema
@@ -62,9 +67,16 @@ response_format:
           items:
             type: string
           maxItems: 3
+        sources:
+          type: array
+          description: "List of source URLs extracted from the content, max of 10."
+          items:
+            type: string
+          maxItems: 10
       required:
         - learnings
         - follow_up_questions
+        - sources
       additionalProperties: false
 
 tools: []
