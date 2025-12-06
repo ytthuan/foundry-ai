@@ -42,8 +42,6 @@ trigger:
           value: =0
         - variable: Local.serp_input_message
           value: =""
-        - variable: Local.all_sources
-          value: =""
     - kind: Question
       variable: Local.research_query
       id: action-1764304546557
@@ -98,9 +96,6 @@ trigger:
       id: action-1764390494378
       variable: Local.total_questions
       value: =CountRows(Local.clarifying_response.questions)
-    - kind: SendActivity
-      activity: "Total question: {Local.total_questions}"
-      id: action-1764390358191
     - kind: ConditionGroup
       conditions:
         - condition: =((Local.total_questions > 0)&& (Local.clarifying_qa_iterator < Local.total_questions))
@@ -175,8 +170,6 @@ trigger:
                 messages: =Local.report_agent_message
               output:
                 autoSend: true
-            - kind: EndConversation
-              id: action-1764408312946
           id: check_reched_condition
       id: check_depth_reached
       elseActions:
@@ -250,6 +243,9 @@ trigger:
                   id: create_input_learning_agent_message
                   variable: Local.current_learning_query
                   value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Given the following contents from a SERP search for the query:", Char(10), "<query>", Local.current_query, "</query>", Char(10), Char(10), "Research Goal: ", Local.current_research_goal, Char(10), Char(10), "<contents>", Char(10), Concat(Local.web_search_results, Text, Char(10)), Char(10), "</contents>")'
+                - kind: SendActivity
+                  activity: Learning...
+                  id: action-1764665397913
                 - kind: InvokeAzureAgent
                   id: invoke_learning
                   agent:
@@ -272,7 +268,7 @@ trigger:
                   variable: Local.all_iteration_followups
                   value: =Concatenate(Local.all_iteration_followups, Concat(Local.learnings_response.follow_up_questions, Value, Char(10)), Char(10))
                 - kind: SetVariable
-                  id: accumulate_sources
+                  id: accumulate_source
                   variable: Local.all_sources
                   value: =Concatenate(Local.all_sources, Concat(Local.learnings_response.sources, Value, Char(10)), Char(10))
                 - kind: GotoAction
@@ -288,6 +284,8 @@ trigger:
             - kind: GotoAction
               actionId: research_iteration
               id: loopback-research-iteration
+    - kind: EndConversation
+      id: action-1765010563008
 id: ""
 name: Deep-Research
 description: ""

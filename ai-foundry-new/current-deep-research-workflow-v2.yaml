@@ -1,0 +1,327 @@
+kind: workflow
+trigger:
+  kind: OnConversationStart
+  id: trigger_wf
+  actions:
+    - kind: SetMultipleVariables
+      id: init-variables
+      assignments:
+        - variable: Local.current_date_time
+          value: =Now()
+        - variable: Local.all_learnings
+          value: =""
+        - variable: Local.current_iteration
+          value: =0
+        - variable: Local.depth
+          value: =1
+        - variable: Local.breadth
+          value: =1
+        - variable: Local.enriched_query
+          value: =""
+        - variable: Local.current_clarifying_question
+          value: =""
+        - variable: Local.serp_queries
+          value: ={}
+        - variable: Local.query_index
+          value: =0
+        - variable: Local.current_query
+          value: =""
+        - variable: Local.current_research_goal
+          value: =""
+        - variable: Local.web_search_results
+          value: =""
+        - variable: Local.learnings_response
+          value: ={}
+        - variable: Local.latest_followups
+          value: =[]
+        - variable: Local.all_iteration_followups
+          value: =""
+        - variable: Local.iteration_status
+          value: =""
+        - variable: Local.clarifying_qa_iterator
+          value: =0
+        - variable: Local.serp_input_message
+          value: =""
+        - variable: Local.clarifying_input_message
+          value: =""
+        - variable: Local.all_sources
+          value: =""
+        - variable: Local.iteration_range
+          value: =[]
+        - variable: Local.serp_query_pairs
+          value: =[]
+        - variable: Local.total_iterations
+          value: =0
+        - variable: Local.total_queries
+          value: =0
+        - variable: Local.current_iteration_index
+          value: =0
+    - kind: Question
+      variable: Local.research_query
+      id: ask-research-query
+      entity: StringPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        🔬 Welcome to DeepResearch!
+
+        What would you like to research?
+
+        Please provide a detailed description of the topic.
+    - kind: Question
+      variable: Local.depth
+      id: question-depth
+      entity: NumberPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        📊 **Research Depth**
+
+        How many research iterations would you like? (1-5 recommended)
+
+        Higher depth = more thorough research but takes longer.
+    - kind: Question
+      variable: Local.breadth
+      id: question-breadth
+      entity: NumberPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        🔍 **Research Breadth**
+
+        How many search queries per iteration? (1-5 recommended)
+
+        Higher breadth = wider coverage but takes longer.
+    - kind: SetVariable
+      id: seed-enriched-query
+      variable: Local.enriched_query
+      value: '=Concatenate("Original Query: ", Local.research_query, Char(10), Char(10))'
+    - kind: SetVariable
+      id: set-clarifying-input-message
+      variable: Local.clarifying_input_message
+      value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Given the following query from the user, ask some follow up questions to clarify the research direction. Return a maximum of 3 questions, but feel free to return less if the original query is clear:", Char(10), Char(10), "<query>", Local.research_query, "</query>")
+    - kind: InvokeAzureAgent
+      id: invoke-clarifying-agent
+      agent:
+        name: ClarifyingQuestionsAgent
+      input:
+        messages: =Local.clarifying_input_message
+      output:
+        autoSend: false
+        responseObject: Local.clarifying_response
+    - kind: SetVariable
+      id: count-clarifying-questions
+      variable: Local.total_questions
+      value: =CountRows(Local.clarifying_response.questions)
+    - kind: ConditionGroup
+      id: clarifying-questions-loop
+      conditions:
+        - condition: '=((Local.total_questions > 0) && (Local.clarifying_qa_iterator < Local.total_questions))'
+          actions:
+            - kind: SetVariable
+              id: increment-clarifying-index
+              variable: Local.clarifying_qa_iterator
+              value: =Local.clarifying_qa_iterator + 1
+            - kind: SetVariable
+              id: set-current-clarifying-question
+              variable: Local.current_clarifying_question
+              value: =Index(Local.clarifying_response.questions, Local.clarifying_qa_iterator).Value
+            - kind: Question
+              variable: Local.current_clarifying_answer
+              id: ask-clarifying-answer
+              entity: StringPrebuiltEntity
+              skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+              prompt: "{Local.current_clarifying_question}"
+            - kind: SetVariable
+              id: append-enriched-query
+              variable: Local.enriched_query
+              value: |-
+                =Concatenate(
+                  Local.enriched_query,Char(10),
+                  "Q",Local.clarifying_qa_iterator,": ", Local.current_clarifying_question, Char(10),
+                  "A",Local.clarifying_qa_iterator,": ", Local.current_clarifying_answer , Char(10)
+                )
+            - kind: GotoAction
+              id: goto-clarifying-loop
+              actionId: clarifying-questions-loop
+          id: clarifying-loop-continue
+      elseActions: []
+    - kind: SendActivity
+      activity: "Enriched queries: {Local.enriched_query}"
+      id: show-enriched-query
+    - kind: InvokeAzureAgent
+      id: invoke-title-agent
+      agent:
+        name: ReportTitleAgent
+      input:
+        messages: =Local.enriched_query
+      output:
+        autoSend: false
+        responseObject: Local.report_info
+    - kind: SendActivity
+      activity: |-
+        # 📋 Research Started
+            
+            **Title:** {Local.report_info.title}
+            **Description:** {Local.report_info.description}
+            
+            **Research configuration:**
+            - Depth: {Local.depth} iterations
+            - Breadth: {Local.breadth} queries per iteration
+      id: announce-research-start
+    - kind: SetVariable
+      id: set-iteration-range
+      variable: Local.iteration_range
+      value: =Sequence(Local.depth)
+    - kind: SetVariable
+      id: set-total-iterations
+      variable: Local.total_iterations
+      value: =CountRows(Local.iteration_range)
+    - kind: ConditionGroup
+      id: iteration-loop
+      conditions:
+        - condition: '=((Local.total_iterations > 0) && (Local.current_iteration_index < Local.total_iterations))'
+          actions:
+            - kind: SetVariable
+              id: increment-iteration-index
+              variable: Local.current_iteration_index
+              value: =Local.current_iteration_index + 1
+            - kind: SetVariable
+              id: set-current-iteration
+              variable: Local.current_iteration
+              value: =Index(Local.iteration_range, Local.current_iteration_index).Value
+            - kind: SetVariable
+              id: reset-iteration-followups
+              variable: Local.all_iteration_followups
+              value: =""
+            - kind: SendActivity
+              activity: |-
+                🔄 **Research Iteration {Local.current_iteration} of {Local.depth}**
+
+                Generating search queries...
+              id: notify-iteration
+            - kind: SetVariable
+              id: build-serp-input
+              variable: Local.serp_input_message
+              value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Given the following prompt from the user, generate a list of SERP queries to research the topic.", Char(10), "Reduce the number of words in each query to its keywords only.", Char(10), "Return a maximum of ", Text(Local.breadth), " queries, but feel free to return less if the original prompt is clear. Make sure each query is unique and not similar to each other:", Char(10), Char(10), "<prompt>", Local.enriched_query, "</prompt>", If(Len(Local.all_learnings) > 0, Concatenate(Char(10), Char(10), "Here are some learnings from previous research, use them to generate more specific queries:", Char(10), Local.all_learnings), ""))
+            - kind: InvokeAzureAgent
+              id: invoke-serp-agent
+              agent:
+                name: SERPQueryAgent
+              input:
+                messages: =Local.serp_input_message
+              output:
+                autoSend: false
+                responseObject: Local.serp_queries
+            - kind: SetVariable
+              id: build-serp-query-pairs
+              variable: Local.serp_query_pairs
+              value: '=ForAll(Sequence(CountRows(Local.serp_queries.queries)), { query: Index(Local.serp_queries.queries, Value).Value, goal: Index(Local.serp_queries.research_goals, Value).Value })'
+            - kind: SendActivity
+              activity: 📝 Generated {CountRows(Local.serp_queries.queries)} search queries
+              id: notify-queries-generated
+            - kind: SetVariable
+              id: reset-query-index
+              variable: Local.query_index
+              value: =0
+            - kind: SetVariable
+              id: set-total-queries
+              variable: Local.total_queries
+              value: =CountRows(Local.serp_query_pairs)
+            - kind: ConditionGroup
+              id: query-loop
+              conditions:
+                - condition: '=((Local.total_queries > 0) && (Local.query_index < Local.total_queries))'
+                  actions:
+                    - kind: SetVariable
+                      id: increment-query-index
+                      variable: Local.query_index
+                      value: =Local.query_index + 1
+                    - kind: SetVariable
+                      id: set-current-query
+                      variable: Local.current_query
+                      value: =Index(Local.serp_query_pairs, Local.query_index).query
+                    - kind: SetVariable
+                      id: set-current-goal
+                      variable: Local.current_research_goal
+                      value: =Index(Local.serp_query_pairs, Local.query_index).goal
+                    - kind: SendActivity
+                      activity: "🔍 Searching ({Local.query_index}/{Local.total_queries}): {Local.current_query}"
+                      id: notify-searching
+                    - kind: SetVariable
+                      id: set-query-goal-text
+                      variable: Local.current_query_research_goal
+                      value: '=Concatenate("Query: ", Local.current_query, Char(10), "Research Goal: ", Local.current_research_goal)'
+                    - kind: InvokeAzureAgent
+                      id: invoke-websearch
+                      agent:
+                        name: WebSearchAgent
+                      input:
+                        messages: =Local.current_query_research_goal
+                      output:
+                        autoSend: false
+                        messages: Local.web_search_results
+                    - kind: SetVariable
+                      id: build-learning-input
+                      variable: Local.current_learning_query
+                      value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Given the following contents from a SERP search for the query:", Char(10), "<query>", Local.current_query, "</query>", Char(10), Char(10), "Research Goal: ", Local.current_research_goal, Char(10), Char(10), "<contents>", Char(10), Concat(Local.web_search_results, Text, Char(10)), Char(10), "</contents>")'
+                    - kind: SendActivity
+                      activity: Learning...
+                      id: notify-learning
+                    - kind: InvokeAzureAgent
+                      id: invoke-learning-agent
+                      agent:
+                        name: LearningsAgent
+                      input:
+                        messages: =Local.current_learning_query
+                      output:
+                        autoSend: false
+                        responseObject: Local.learnings_response
+                    - kind: SetVariable
+                      id: append-learnings
+                      variable: Local.all_learnings
+                      value: =Concatenate(Local.all_learnings, Concat(Local.learnings_response.learnings, Value, Char(10)), Char(10))
+                    - kind: SetVariable
+                      id: set-latest-followups
+                      variable: Local.latest_followups
+                      value: =Local.learnings_response.follow_up_questions
+                    - kind: SetVariable
+                      id: append-followups
+                      variable: Local.all_iteration_followups
+                      value: =Concatenate(Local.all_iteration_followups, Concat(Local.learnings_response.follow_up_questions, Value, Char(10)), Char(10))
+                    - kind: SetVariable
+                      id: append-sources
+                      variable: Local.all_sources
+                      value: =Concatenate(Local.all_sources, Concat(Local.learnings_response.sources, Value, Char(10)), Char(10))
+                    - kind: GotoAction
+                      id: goto-query-loop
+                      actionId: query-loop
+                  id: query-loop-continue
+              elseActions: []
+            - kind: SetVariable
+              id: update-enriched-with-followups
+              variable: Local.enriched_query
+              value: =Concatenate(Local.enriched_query, Char(10), Char(10), "Follow-up Questions for Next Iteration:", Char(10), Trim(Local.all_iteration_followups))
+            - kind: GotoAction
+              id: goto-iteration-loop
+              actionId: iteration-loop
+          id: iteration-loop-continue
+      elseActions: []
+    - kind: SendActivity
+      activity: ✅ Research complete! Generating final report with learnings...
+      id: notify-generating-report
+    - kind: SetVariable
+      id: set-report-message
+      variable: Local.report_agent_message
+      value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "<prompt>", Local.enriched_query, "</prompt>", Char(10), Char(10), "Here are all the learnings from previous research:", Char(10), Char(10), "<learnings>", Char(10), "<learning>", Substitute(Trim(Local.all_learnings), Char(10), Concatenate("</learning>", Char(10), "<learning>")), "</learning>", Char(10), "</learnings>", Char(10), Char(10), "Here are all the sources referenced during research:", Char(10), Char(10), "<sources>", Char(10), Trim(Local.all_sources), Char(10), "</sources>")
+    - kind: InvokeAzureAgent
+      id: invoke-report-agent
+      agent:
+        name: ReportAgent
+      input:
+        messages: =Local.report_agent_message
+      output:
+        autoSend: true
+    - kind: EndConversation
+      id: end-workflow
+id: ""
+name: Deep-Research-V2
+description: ""
+
