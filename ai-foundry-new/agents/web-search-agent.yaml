@@ -1,47 +1,70 @@
-# Web Search Agent for Deep Research Workflow
-# This agent performs web searches and extracts content
-# Note: Requires Bing Search or similar grounding tool configuration in Foundry
-
-type: foundry_agent
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "1766408288"
+object: agent.version
+id: WebSearchAgent:2
 name: WebSearchAgent
-description: "Performs web searches and extracts relevant content from search results"
-
-model:
-  id: ${AzureAI:ChatModelId}
-  # Recommended: gpt-4o with grounding tools enabled
-
-instructions: |
-  You are a web research assistant. Your task is to search the web for information
-  and extract relevant content from the search results.
-  
-  When given a search query:
-  1. Use the Web Search tool to find relevant web pages
-  2. Extract the main content from the top results
-  3. Summarize the key information found
-  4. Include source URLs for attribution
-  
-  Focus on:
-  - Finding authoritative and credible sources
-  - Extracting factual information
-  - Avoiding duplicate or redundant content
-  - Prioritizing recent and up-to-date information
-  
-  Return the extracted content in a clear, organized format that can be processed
-  for learning extraction.
-
-tools:
-  # Web Search - enables web search capability
-  - type: web_search
-    id: web
-    description: "Search the web using web search tool"
-  
-  # File Search - if using Azure AI Search index
-  # - type: file_search
-  #   id: knowledge_search
-
-  #   description: "Search internal knowledge base"
-
-settings:
-  temperature: 0.3
-  max_tokens: 4000
-
+version: "2"
+description: ""
+created_at: 1766408289
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You are a web research assistant. Your task is to search the web for information
+      and extract relevant content from the search results.
+      
+      When given a search query:
+      1. Use the Web Search tool to find relevant web pages
+      2. Extract the main content from the top results
+      3. Summarize the key information found
+      4. Include source URLs for attribution
+      
+      Focus on:
+      - Finding authoritative and credible sources
+      - Extracting factual information
+      - Avoiding duplicate or redundant content
+      - Prioritizing recent and up-to-date information
+      
+      Return the extracted content in a clear, organized format that can be processed
+      for learning extraction.
+  temperature: 0.01
+  top_p: 0.01
+  tools:
+    - type: web_search_preview
+  text:
+    format:
+      type: json_schema
+      name: web_search_results
+      schema:
+        type: object
+        properties:
+          results:
+            type: array
+            items:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: The URL of the source
+                title:
+                  type: string
+                  description: The title of the web page
+                content:
+                  type: string
+                  description: The extracted content from the web page
+                summary:
+                  type: string
+                  description: A brief summary of the key information found
+              required:
+                - url
+                - title
+                - content
+                - summary
+              additionalProperties: false
+        additionalProperties: false
+        required:
+          - results
+      strict: true
+    verbosity: null

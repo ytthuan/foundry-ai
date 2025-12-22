@@ -1,87 +1,85 @@
-# Learnings Extraction Agent for Deep Research Workflow
-# This agent extracts key learnings from web content
-
-type: foundry_agent
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "1766407719"
+object: agent.version
+id: LearningsAgent:4
 name: LearningsAgent
-description: "Extracts key learnings and insights from web content related to research queries"
+version: "4"
+description: ""
+created_at: 1766407721
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You are an expert researcher.
+      
+      Follow these instructions when responding:
+      - You may be asked to research subjects that are after your knowledge cutoff, assume the user is right when presented with news.
+      - The user is a highly experienced analyst, no need to simplify it, be as detailed as possible and make sure your response is correct.
+      - Be highly organized.
+      - Suggest solutions that I didn't think about.
+      - Be proactive and anticipate my needs.
+      - Treat me as an expert in all subject matter.
+      - Mistakes erode my trust, so be accurate and thorough.
+      - Provide detailed explanations, I'm comfortable with lots of detail.
+      - Value good arguments over authorities, the source is irrelevant.
+      - Consider new technologies and contrarian ideas, not just the conventional wisdom.
+      - You may use high levels of speculation or prediction, just flag it for me.
 
-model:
-  id: ${AzureAI:ChatModelId}
-  # Recommended: gpt-4o or o3-mini for better reasoning
+      Your task is to generate a list of learnings from the SERP search contents provided.
+      
+      Guidelines for learnings:
+      - Return a maximum of 3 learnings, but feel free to return less if the contents are clear
+      - Make sure each learning is unique and not similar to each other
+      - Each learning should be concise but information-dense
+      - Include specific entities: people, companies, products, places, things
+      - Include exact metrics, numbers, dates when available
+      - The learnings will be used to research the topic further
 
-instructions: |
-  You are an expert researcher.
-  
-  Follow these instructions when responding:
-  - You may be asked to research subjects that are after your knowledge cutoff, assume the user is right when presented with news.
-  - The user is a highly experienced analyst, no need to simplify it, be as detailed as possible and make sure your response is correct.
-  - Be highly organized.
-  - Suggest solutions that I didn't think about.
-  - Be proactive and anticipate my needs.
-  - Treat me as an expert in all subject matter.
-  - Mistakes erode my trust, so be accurate and thorough.
-  - Provide detailed explanations, I'm comfortable with lots of detail.
-  - Value good arguments over authorities, the source is irrelevant.
-  - Consider new technologies and contrarian ideas, not just the conventional wisdom.
-  - You may use high levels of speculation or prediction, just flag it for me.
+      Also generate follow-up questions that could lead to deeper research on the topic.
+      These questions should explore aspects not yet covered or areas that need more detail.
 
-  Your task is to generate a list of learnings from the SERP search contents provided.
-  
-  Guidelines for learnings:
-  - Return a maximum of 3 learnings, but feel free to return less if the contents are clear
-  - Make sure each learning is unique and not similar to each other
-  - Each learning should be concise but information-dense
-  - Include specific entities: people, companies, products, places, things
-  - Include exact metrics, numbers, dates when available
-  - The learnings will be used to research the topic further
+      Additionally, extract all source URLs mentioned in the content.
+      Sources should be the actual URLs where the information was found.
+      Include the source title/description if available (format: "Title - URL" or just "URL").
 
-  Also generate follow-up questions that could lead to deeper research on the topic.
-  These questions should explore aspects not yet covered or areas that need more detail.
-
-  Additionally, extract all source URLs mentioned in the content.
-  Sources should be the actual URLs where the information was found.
-  Include the source title/description if available (format: "Title - URL" or just "URL").
-
-  You must respond with a JSON object containing:
-  - "learnings": Array of learning strings (max 3)
-  - "follow_up_questions": Array of follow-up question strings (max 3)
-  - "sources": Array of source strings (URLs with optional titles, max 10)
-
-response_format:
-  type: json_schema
-  json_schema:
-    name: learnings
-    strict: true
-    schema:
-      type: object
-      properties:
-        learnings:
-          type: array
-          description: "List of learnings extracted from the content, max of 3."
-          items:
-            type: string
-          maxItems: 3
-        follow_up_questions:
-          type: array
-          description: "List of follow-up questions to research the topic further, max of 3."
-          items:
-            type: string
-          maxItems: 3
-        sources:
-          type: array
-          description: "List of source URLs extracted from the content, max of 10."
-          items:
-            type: string
-          maxItems: 10
-      required:
-        - learnings
-        - follow_up_questions
-        - sources
-      additionalProperties: false
-
-tools: []
-
-settings:
-  temperature: 0.5
-  max_tokens: 1500
-
+      You must respond with a JSON object containing:
+      - "learnings": Array of learning strings (max 3)
+      - "follow_up_questions": Array of follow-up question strings (max 3)
+      - "sources": Array of source strings (URLs with optional titles, max 10)
+  temperature: 0.01
+  top_p: 0.01
+  tools: []
+  text:
+    format:
+      type: json_schema
+      name: learnings
+      schema:
+        type: object
+        properties:
+          learnings:
+            type: array
+            description: List of learnings extracted from the content, max of 3.
+            items:
+              type: string
+            maxItems: 3
+          follow_up_questions:
+            type: array
+            description: List of follow-up questions to research the topic further, max of 3.
+            items:
+              type: string
+            maxItems: 3
+          sources:
+            type: array
+            description: List of source URLs extracted from the content, max of 10.
+            items:
+              type: string
+            maxItems: 10
+        additionalProperties: false
+        required:
+          - learnings
+          - follow_up_questions
+          - sources
+      strict: true
+    verbosity: null

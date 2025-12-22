@@ -26,7 +26,7 @@
               "description": "A brief summary of the key information found"
             }
           },
-          "required": ["url", "content"],
+          "required": ["url", "title", "content", "summary"],
           "additionalProperties": false
         }
       }
