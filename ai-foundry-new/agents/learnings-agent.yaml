@@ -1,4 +1,5 @@
 metadata:
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766407719"
@@ -13,6 +14,23 @@ definition:
   model: model-router
   instructions: |-
     You are an expert researcher.
+=======
+  description: ""
+  modified_at: "1764929615"
+object: agent.version
+id: LearningsAgent:7
+name: LearningsAgent
+version: "7"
+description: ""
+created_at: 1764929617
+definition:
+  kind: prompt
+  rai_config:
+    rai_policy_name: /subscriptions/0ab46480-1092-481d-9089-1a35fe54e67e/resourceGroups/Foundry-Rg/providers/Microsoft.CognitiveServices/accounts/leoaifoundryeastus2/raiPolicies/filter
+  model: gpt-4.1-mini
+  instructions: |2-
+      You are an expert researcher.
+>>>>>>> Stashed changes
       
       Follow these instructions when responding:
       - You may be asked to research subjects that are after your knowledge cutoff, assume the user is right when presented with news.
@@ -48,7 +66,11 @@ definition:
       - "learnings": Array of learning strings (max 3)
       - "follow_up_questions": Array of follow-up question strings (max 3)
       - "sources": Array of source strings (URLs with optional titles, max 10)
+<<<<<<< Updated upstream
   temperature: 0.01
+=======
+  temperature: 0.5
+>>>>>>> Stashed changes
   top_p: 0.01
   tools: []
   text:

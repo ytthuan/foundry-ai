@@ -1,6 +1,5 @@
 {
   "name": "serp_queries",
-  "strict": true,
   "schema": {
     "type": "object",
     "properties": {
@@ -22,6 +21,10 @@
       }
     },
     "additionalProperties": false,
-    "required": ["queries", "research_goals"]
-  }
+    "required": [
+      "queries",
+      "research_goals"
+    ]
+  },
+  "strict": true
 }

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 metadata:
   logo: Avatar_Default.svg
   description: ""
@@ -10,6 +11,19 @@ description: ""
 created_at: 1766407231
 definition:
   kind: prompt
+=======
+metadata: {}
+object: agent.version
+id: ClarifyingQuestionsAgent:13
+name: ClarifyingQuestionsAgent
+version: "13"
+description: ""
+created_at: 1764422810
+definition:
+  kind: prompt
+  rai_config:
+    rai_policy_name: /subscriptions/0ab46480-1092-481d-9089-1a35fe54e67e/resourceGroups/Foundry-Rg/providers/Microsoft.CognitiveServices/accounts/leoaifoundryeastus2/raiPolicies/filter
+>>>>>>> Stashed changes
   model: gpt-4.1-nano
   instructions: |-
     You are an expert researcher.

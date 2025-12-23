@@ -1,6 +1,5 @@
 {
   "name": "report_title",
-  "strict": true,
   "schema": {
     "type": "object",
     "properties": {
@@ -14,6 +13,10 @@
       }
     },
     "additionalProperties": false,
-    "required": ["title", "description"]
-  }
+    "required": [
+      "title",
+      "description"
+    ]
+  },
+  "strict": true
 }

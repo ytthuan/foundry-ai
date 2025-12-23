@@ -1,6 +1,5 @@
 {
   "name": "learnings",
-  "strict": true,
   "schema": {
     "type": "object",
     "properties": {
@@ -30,6 +29,11 @@
       }
     },
     "additionalProperties": false,
-    "required": ["learnings", "follow_up_questions", "sources"]
-  }
+    "required": [
+      "learnings",
+      "follow_up_questions",
+      "sources"
+    ]
+  },
+  "strict": true
 }

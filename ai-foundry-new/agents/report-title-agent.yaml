@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 metadata:
   logo: Avatar_Default.svg
   description: ""
@@ -30,6 +31,39 @@ definition:
 
       You must respond with a JSON object containing "title" and "description" fields.
   temperature: 0.01
+=======
+metadata: {}
+object: agent.version
+id: ReportTitleAgent:3
+name: ReportTitleAgent
+version: "3"
+description: ""
+created_at: 1764425097
+definition:
+  kind: prompt
+  rai_config:
+    rai_policy_name: /subscriptions/0ab46480-1092-481d-9089-1a35fe54e67e/resourceGroups/Foundry-Rg/providers/Microsoft.CognitiveServices/accounts/leoaifoundryeastus2/raiPolicies/filter
+  model: gpt-4.1-nano
+  instructions: |-
+    Create a suitable title and short description for a research report.
+
+    Given the research query, generate:
+    - A concise, descriptive title (max 100 characters) that captures the essence of the research
+    - A brief description summarizing what the research covers (max 200 characters)
+
+    The title should be:
+    - Professional and clear
+    - Specific to the research topic
+    - Engaging but not sensational
+
+    The description should:
+    - Summarize the scope of the research
+    - Indicate the main areas covered
+    - Be informative yet brief
+
+    You must respond with a JSON object containing "title" and "description" fields.
+  temperature: 0.7
+>>>>>>> Stashed changes
   top_p: 0.01
   tools: []
   text:
