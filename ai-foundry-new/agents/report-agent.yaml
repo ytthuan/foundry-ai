@@ -1,5 +1,6 @@
 metadata:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766407793"
@@ -20,6 +21,13 @@ definition:
 object: agent.version
 id: ReportAgent:7
 name: ReportAgent
+=======
+  description: ""
+  modified_at: "1764929668"
+object: agent.version
+id: ReportAgent:7
+name: ReportAgent
+>>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764929670
@@ -30,6 +38,9 @@ definition:
   model: gpt-4.1-nano
   instructions: |2-
       You are an expert and insightful researcher.
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
       
       Follow these instructions when responding:
@@ -65,8 +76,11 @@ definition:
       - Bold (**) for key terms
       - A final "## Sources" section with numbered list of all sources used
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   tools: []
 =======
+=======
+>>>>>>> Stashed changes
   temperature: 0.8
   top_p: 0.01
   tools: []
@@ -74,4 +88,7 @@ definition:
     format:
       type: text
     verbosity: null
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

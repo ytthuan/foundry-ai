@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 metadata:
   logo: Avatar_Default.svg
   description: ""
@@ -18,6 +19,12 @@ metadata: {}
 object: agent.version
 id: SERPQueryAgent:7
 name: SERPQueryAgent
+=======
+metadata: {}
+object: agent.version
+id: SERPQueryAgent:7
+name: SERPQueryAgent
+>>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764422755
@@ -27,6 +34,9 @@ definition:
     rai_policy_name: /subscriptions/0ab46480-1092-481d-9089-1a35fe54e67e/resourceGroups/Foundry-Rg/providers/Microsoft.CognitiveServices/accounts/leoaifoundryeastus2/raiPolicies/filter
   model: gpt-4.1-mini
   instructions: |-
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     You are an expert researcher.
       
@@ -62,7 +72,11 @@ definition:
       - "queries": An array of search keyword strings
       - "research_goals": An array of corresponding research goals (same order as queries)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   temperature: 0.01
+=======
+  temperature: 0.8
+>>>>>>> Stashed changes
 =======
   temperature: 0.8
 >>>>>>> Stashed changes

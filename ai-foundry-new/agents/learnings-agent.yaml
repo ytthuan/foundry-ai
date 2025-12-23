@@ -1,5 +1,6 @@
 metadata:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766407719"
@@ -20,6 +21,13 @@ definition:
 object: agent.version
 id: LearningsAgent:7
 name: LearningsAgent
+=======
+  description: ""
+  modified_at: "1764929615"
+object: agent.version
+id: LearningsAgent:7
+name: LearningsAgent
+>>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764929617
@@ -30,6 +38,9 @@ definition:
   model: gpt-4.1-mini
   instructions: |2-
       You are an expert researcher.
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
       
       Follow these instructions when responding:
@@ -67,7 +78,11 @@ definition:
       - "follow_up_questions": Array of follow-up question strings (max 3)
       - "sources": Array of source strings (URLs with optional titles, max 10)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   temperature: 0.01
+=======
+  temperature: 0.5
+>>>>>>> Stashed changes
 =======
   temperature: 0.5
 >>>>>>> Stashed changes

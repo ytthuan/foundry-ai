@@ -1,5 +1,6 @@
 metadata:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766408288"
@@ -18,12 +19,22 @@ definition:
 object: agent.version
 id: WebSearchAgent:19
 name: WebSearchAgent
+=======
+  description: ""
+  modified_at: "1764939820"
+object: agent.version
+id: WebSearchAgent:19
+name: WebSearchAgent
+>>>>>>> Stashed changes
 version: "19"
 description: ""
 created_at: 1764939821
 definition:
   kind: prompt
   model: gpt-4.1-mini
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   instructions: |-
     You are a web research assistant. Your task is to search the web for information
@@ -44,14 +55,18 @@ definition:
       Return the extracted content in a clear, organized format that can be processed
       for learning extraction.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   temperature: 0.01
   top_p: 0.01
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   tools:
     - type: web_search_preview
   text:
     format:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
       type: json_schema
       name: web_search_results
@@ -85,6 +100,9 @@ definition:
         required:
           - results
       strict: true
+=======
+      type: text
+>>>>>>> Stashed changes
 =======
       type: text
 >>>>>>> Stashed changes
