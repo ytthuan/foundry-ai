@@ -1,41 +1,9 @@
 metadata:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  logo: Avatar_Default.svg
-  description: ""
-  modified_at: "1766407793"
-object: agent.version
-id: ReportAgent:2
-name: ReportAgent
-version: "2"
-description: ""
-created_at: 1766407794
-definition:
-  kind: prompt
-  model: model-router
-  instructions: |
-    You are an expert and insightful researcher.
-=======
   description: ""
   modified_at: "1764929668"
 object: agent.version
 id: ReportAgent:7
 name: ReportAgent
-=======
-  description: ""
-  modified_at: "1764929668"
-object: agent.version
-id: ReportAgent:7
-name: ReportAgent
->>>>>>> Stashed changes
-=======
-  description: ""
-  modified_at: "1764929668"
-object: agent.version
-id: ReportAgent:7
-name: ReportAgent
->>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764929670
@@ -46,13 +14,6 @@ definition:
   model: gpt-4.1-nano
   instructions: |2-
       You are an expert and insightful researcher.
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
       
       Follow these instructions when responding:
       - You may be asked to research subjects that are after your knowledge cutoff, assume the user is right when presented with news.
@@ -86,15 +47,6 @@ definition:
       - Bullet points for lists of items
       - Bold (**) for key terms
       - A final "## Sources" section with numbered list of all sources used
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  tools: []
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   temperature: 0.8
   top_p: 0.01
   tools: []
@@ -102,10 +54,3 @@ definition:
     format:
       type: text
     verbosity: null
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes

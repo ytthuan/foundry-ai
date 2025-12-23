@@ -1,41 +1,4 @@
 metadata:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  logo: Avatar_Default.svg
-  description: ""
-  modified_at: "1766407719"
-object: agent.version
-id: LearningsAgent:4
-name: LearningsAgent
-version: "4"
-description: ""
-created_at: 1766407721
-definition:
-  kind: prompt
-  model: model-router
-  instructions: |-
-    You are an expert researcher.
-=======
-  description: ""
-  modified_at: "1764929615"
-object: agent.version
-id: LearningsAgent:7
-name: LearningsAgent
-=======
-  description: ""
-  modified_at: "1764929615"
-object: agent.version
-id: LearningsAgent:7
-name: LearningsAgent
->>>>>>> Stashed changes
-=======
-  description: ""
-  modified_at: "1764929615"
-object: agent.version
-id: LearningsAgent:7
-name: LearningsAgent
->>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764929617
@@ -46,14 +9,6 @@ definition:
   model: gpt-4.1-mini
   instructions: |2-
       You are an expert researcher.
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-      
       Follow these instructions when responding:
       - You may be asked to research subjects that are after your knowledge cutoff, assume the user is right when presented with news.
       - The user is a highly experienced analyst, no need to simplify it, be as detailed as possible and make sure your response is correct.
@@ -76,10 +31,24 @@ definition:
       - Include specific entities: people, companies, products, places, things
       - Include exact metrics, numbers, dates when available
       - The learnings will be used to research the topic further
+      Your task is to generate a list of learnings from the SERP search contents provided.
+      
+      Guidelines for learnings:
+      - Return a maximum of 3 learnings, but feel free to return less if the contents are clear
+      - Make sure each learning is unique and not similar to each other
+      - Each learning should be concise but information-dense
+      - Include specific entities: people, companies, products, places, things
+      - Include exact metrics, numbers, dates when available
+      - The learnings will be used to research the topic further
 
       Also generate follow-up questions that could lead to deeper research on the topic.
       These questions should explore aspects not yet covered or areas that need more detail.
+      Also generate follow-up questions that could lead to deeper research on the topic.
+      These questions should explore aspects not yet covered or areas that need more detail.
 
+      Additionally, extract all source URLs mentioned in the content.
+      Sources should be the actual URLs where the information was found.
+      Include the source title/description if available (format: "Title - URL" or just "URL").
       Additionally, extract all source URLs mentioned in the content.
       Sources should be the actual URLs where the information was found.
       Include the source title/description if available (format: "Title - URL" or just "URL").
@@ -88,19 +57,7 @@ definition:
       - "learnings": Array of learning strings (max 3)
       - "follow_up_questions": Array of follow-up question strings (max 3)
       - "sources": Array of source strings (URLs with optional titles, max 10)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   temperature: 0.01
-=======
-  temperature: 0.5
->>>>>>> Stashed changes
-=======
-  temperature: 0.5
->>>>>>> Stashed changes
-=======
-  temperature: 0.5
->>>>>>> Stashed changes
   top_p: 0.01
   tools: []
   text:

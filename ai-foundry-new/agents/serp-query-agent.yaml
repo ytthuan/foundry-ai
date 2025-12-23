@@ -1,37 +1,7 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-metadata:
-  logo: Avatar_Default.svg
-  description: ""
-  modified_at: "1766408172"
-object: agent.version
-id: SERPQueryAgent:4
-name: SERPQueryAgent
-version: "4"
-description: ""
-created_at: 1766408173
-definition:
-  kind: prompt
-  model: model-router
-  instructions: |
-=======
 metadata: {}
 object: agent.version
 id: SERPQueryAgent:7
 name: SERPQueryAgent
-=======
-metadata: {}
-object: agent.version
-id: SERPQueryAgent:7
-name: SERPQueryAgent
->>>>>>> Stashed changes
-=======
-metadata: {}
-object: agent.version
-id: SERPQueryAgent:7
-name: SERPQueryAgent
->>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764422755
@@ -41,13 +11,6 @@ definition:
     rai_policy_name: /subscriptions/0ab46480-1092-481d-9089-1a35fe54e67e/resourceGroups/Foundry-Rg/providers/Microsoft.CognitiveServices/accounts/leoaifoundryeastus2/raiPolicies/filter
   model: gpt-4.1-mini
   instructions: |-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     You are an expert researcher.
       
       Follow these instructions when responding:
@@ -81,19 +44,7 @@ definition:
       You must respond with a JSON object containing two arrays:
       - "queries": An array of search keyword strings
       - "research_goals": An array of corresponding research goals (same order as queries)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  temperature: 0.01
-=======
   temperature: 0.8
->>>>>>> Stashed changes
-=======
-  temperature: 0.8
->>>>>>> Stashed changes
-=======
-  temperature: 0.8
->>>>>>> Stashed changes
   top_p: 0.01
   tools: []
   text:

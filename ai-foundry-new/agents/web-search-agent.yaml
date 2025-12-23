@@ -1,52 +1,15 @@
 metadata:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  logo: Avatar_Default.svg
-  description: ""
-  modified_at: "1766408288"
-object: agent.version
-id: WebSearchAgent:2
-name: WebSearchAgent
-version: "2"
-description: ""
-created_at: 1766408289
-definition:
-  kind: prompt
-  model: model-router
-=======
   description: ""
   modified_at: "1764939820"
 object: agent.version
 id: WebSearchAgent:19
 name: WebSearchAgent
-=======
-  description: ""
-  modified_at: "1764939820"
-object: agent.version
-id: WebSearchAgent:19
-name: WebSearchAgent
->>>>>>> Stashed changes
-=======
-  description: ""
-  modified_at: "1764939820"
-object: agent.version
-id: WebSearchAgent:19
-name: WebSearchAgent
->>>>>>> Stashed changes
 version: "19"
 description: ""
 created_at: 1764939821
 definition:
   kind: prompt
   model: gpt-4.1-mini
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   instructions: |-
     You are a web research assistant. Your task is to search the web for information
       and extract relevant content from the search results.
@@ -65,63 +28,9 @@ definition:
       
       Return the extracted content in a clear, organized format that can be processed
       for learning extraction.
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  temperature: 0.01
-  top_p: 0.01
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   tools:
     - type: web_search_preview
   text:
     format:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      type: json_schema
-      name: web_search_results
-      schema:
-        type: object
-        properties:
-          results:
-            type: array
-            items:
-              type: object
-              properties:
-                url:
-                  type: string
-                  description: The URL of the source
-                title:
-                  type: string
-                  description: The title of the web page
-                content:
-                  type: string
-                  description: The extracted content from the web page
-                summary:
-                  type: string
-                  description: A brief summary of the key information found
-              required:
-                - url
-                - title
-                - content
-                - summary
-              additionalProperties: false
-        additionalProperties: false
-        required:
-          - results
-      strict: true
-=======
       type: text
->>>>>>> Stashed changes
-=======
-      type: text
->>>>>>> Stashed changes
-=======
-      type: text
->>>>>>> Stashed changes
     verbosity: null
