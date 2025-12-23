@@ -1,6 +1,7 @@
 metadata:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766407719"
@@ -28,6 +29,13 @@ object: agent.version
 id: LearningsAgent:7
 name: LearningsAgent
 >>>>>>> Stashed changes
+=======
+  description: ""
+  modified_at: "1764929615"
+object: agent.version
+id: LearningsAgent:7
+name: LearningsAgent
+>>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764929617
@@ -39,6 +47,9 @@ definition:
   instructions: |2-
       You are an expert researcher.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -79,7 +90,11 @@ definition:
       - "sources": Array of source strings (URLs with optional titles, max 10)
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   temperature: 0.01
+=======
+  temperature: 0.5
+>>>>>>> Stashed changes
 =======
   temperature: 0.5
 >>>>>>> Stashed changes

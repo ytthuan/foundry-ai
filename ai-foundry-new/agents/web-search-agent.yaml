@@ -1,6 +1,7 @@
 metadata:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766408288"
@@ -26,6 +27,13 @@ object: agent.version
 id: WebSearchAgent:19
 name: WebSearchAgent
 >>>>>>> Stashed changes
+=======
+  description: ""
+  modified_at: "1764939820"
+object: agent.version
+id: WebSearchAgent:19
+name: WebSearchAgent
+>>>>>>> Stashed changes
 version: "19"
 description: ""
 created_at: 1764939821
@@ -33,6 +41,9 @@ definition:
   kind: prompt
   model: gpt-4.1-mini
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -56,8 +67,11 @@ definition:
       for learning extraction.
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   temperature: 0.01
   top_p: 0.01
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -66,6 +80,7 @@ definition:
     - type: web_search_preview
   text:
     format:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
       type: json_schema
@@ -100,6 +115,9 @@ definition:
         required:
           - results
       strict: true
+=======
+      type: text
+>>>>>>> Stashed changes
 =======
       type: text
 >>>>>>> Stashed changes

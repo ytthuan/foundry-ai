@@ -1,6 +1,7 @@
 metadata:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   logo: Avatar_Default.svg
   description: ""
   modified_at: "1766407793"
@@ -28,6 +29,13 @@ object: agent.version
 id: ReportAgent:7
 name: ReportAgent
 >>>>>>> Stashed changes
+=======
+  description: ""
+  modified_at: "1764929668"
+object: agent.version
+id: ReportAgent:7
+name: ReportAgent
+>>>>>>> Stashed changes
 version: "7"
 description: ""
 created_at: 1764929670
@@ -39,6 +47,9 @@ definition:
   instructions: |2-
       You are an expert and insightful researcher.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -77,8 +88,11 @@ definition:
       - A final "## Sources" section with numbered list of all sources used
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   tools: []
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   temperature: 0.8
@@ -89,6 +103,9 @@ definition:
       type: text
     verbosity: null
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
