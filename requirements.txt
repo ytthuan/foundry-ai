@@ -4,3 +4,4 @@ python-dotenv
 Flask
 openai
 chainlit
+dotenv

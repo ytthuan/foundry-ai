@@ -1,12 +1,12 @@
 metadata:
   description: ""
-  modified_at: "1764939820"
+  modified_at: "1766673653"
 object: agent.version
-id: WebSearchAgent:19
+id: WebSearchAgent:6
 name: WebSearchAgent
-version: "19"
+version: "6"
 description: ""
-created_at: 1764939821
+created_at: 1766673656
 definition:
   kind: prompt
   model: gpt-4.1-mini
@@ -30,7 +30,3 @@ definition:
       for learning extraction.
   tools:
     - type: web_search_preview
-  text:
-    format:
-      type: text
-    verbosity: null

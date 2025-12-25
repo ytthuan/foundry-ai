@@ -1,39 +1,19 @@
-type: foundry_agent
-name: InternalSearchAgent
-description: "Searches internal knowledge sources (SharePoint, Azure AI Search, Foundry IQ) instead of web"
-
-model:
-  id: ${AzureAI:ChatModelId}
-
-instructions: |
-  You are an internal knowledge research assistant. Your task is to search internal 
-  knowledge sources (SharePoint, Azure AI Search indexes, uploaded documents) and 
-  extract relevant content.
-  
-  When given a search query:
-  1. Use the available knowledge tools to find relevant internal documents
-  2. Extract the main content from the top results
-  3. Summarize the key information found
-  4. Include document names/sources for attribution
-  
-  Focus on:
-  - Finding authoritative internal documents
-  - Extracting factual information from company knowledge bases
-  - Avoiding duplicate or redundant content
-  - Prioritizing the most relevant and recent documents
-  
-  Return the extracted content in a clear, organized format that can be processed
-  for learning extraction.
-
-tools:
-  - type: mcp
-    server_label: knowledge-base
-    server_url: ${AzureAI:KnowledgeBaseMcpEndpoint}
-    require_approval: "never"
-    allowed_tools:
-      - knowledge_base_retrieve
-    project_connection_id: ${AzureAI:KnowledgeBaseConnectionId}
-
-settings:
-  temperature: 0.3
-  max_tokens: 4000
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "1766414288"
+object: agent.version
+id: InternalResearchAgent:6
+name: InternalResearchAgent
+version: "6"
+description: ""
+created_at: 1766414292
+definition:
+  kind: prompt
+  model: gpt-5.2-chat
+  instructions: You are the MS docs AI Assistant help to answer the question regarding Microsoft product. Use knowledge tools to answer the question, Do not made up.
+  tools:
+    - type: mcp
+      server_label: kb_knowledgebase_mslea_9kdyn
+      server_url: https://leoeastus2aisearch.search.windows.net/knowledgebases/knowledgebase-mslearn/mcp?api-version=2025-11-01-Preview
+      project_connection_id: kb-knowledgebase-mslea-9kdyn

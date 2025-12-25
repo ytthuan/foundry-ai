@@ -1,16 +1,17 @@
-metadata: {}
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "1766408172"
 object: agent.version
-id: SERPQueryAgent:7
+id: SERPQueryAgent:4
 name: SERPQueryAgent
-version: "7"
+version: "4"
 description: ""
-created_at: 1764422755
+created_at: 1766408173
 definition:
   kind: prompt
-  rai_config:
-    rai_policy_name: /subscriptions/0ab46480-1092-481d-9089-1a35fe54e67e/resourceGroups/Foundry-Rg/providers/Microsoft.CognitiveServices/accounts/leoaifoundryeastus2/raiPolicies/filter
-  model: gpt-4.1-mini
-  instructions: |-
+  model: model-router
+  instructions: |
     You are an expert researcher.
       
       Follow these instructions when responding:
@@ -44,7 +45,7 @@ definition:
       You must respond with a JSON object containing two arrays:
       - "queries": An array of search keyword strings
       - "research_goals": An array of corresponding research goals (same order as queries)
-  temperature: 0.8
+  temperature: 0.01
   top_p: 0.01
   tools: []
   text:
