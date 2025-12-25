@@ -1,6 +1,6 @@
 # Deep Research Workflow for Microsoft Foundry
 
-A multi-step, recursive research workflow converted from n8n to Microsoft Foundry format. This workflow replicates functionality similar to OpenAI's DeepResearch feature, using AI agents to perform comprehensive research on complex topics.
+A multi-step, recursive research workflow in Microsoft Foundry format. This workflow replicates functionality similar to OpenAI's DeepResearch feature, using AI agents to perform comprehensive research on complex topics.
 
 ---
 
@@ -557,7 +557,6 @@ Enable verbose logging in Foundry portal:
 - [Microsoft Foundry Workflows Documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/workflow)
 - [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/)
 - [Power Fx Reference](https://learn.microsoft.com/en-us/power-platform/power-fx/overview)
-- [Original n8n DeepResearch Template](https://n8n.io/workflows/)
 
 ## License
 

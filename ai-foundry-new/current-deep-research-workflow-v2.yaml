@@ -13,12 +13,14 @@ trigger:
         - variable: Local.current_iteration
           value: =0
         - variable: Local.depth
-          value: =1
+          value: =2
         - variable: Local.breadth
-          value: =1
+          value: =3
         - variable: Local.enriched_query
           value: =""
-        - variable: Local.current_clarifying_question
+        - variable: Local.clarifying_questions_message
+          value: =""
+        - variable: Local.clarifying_answers
           value: =""
         - variable: Local.serp_queries
           value: ={}
@@ -38,8 +40,6 @@ trigger:
           value: =""
         - variable: Local.iteration_status
           value: =""
-        - variable: Local.clarifying_qa_iterator
-          value: =0
         - variable: Local.serp_input_message
           value: =""
         - variable: Local.clarifying_input_message
@@ -96,7 +96,7 @@ trigger:
     - kind: SetVariable
       id: set-clarifying-input-message
       variable: Local.clarifying_input_message
-      value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Given the following query from the user, ask some follow up questions to clarify the research direction. Return a maximum of 3 questions, but feel free to return less if the original query is clear:", Char(10), Char(10), "<query>", Local.research_query, "</query>")
+      value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Given the following query from the user, ask some follow up questions to clarify the research direction. Return between 3 and 5 questions:", Char(10), Char(10), "<query>", Local.research_query, "</query>")
     - kind: InvokeAzureAgent
       id: invoke-clarifying-agent
       agent:
@@ -104,45 +104,20 @@ trigger:
       input:
         messages: =Local.clarifying_input_message
       output:
-        autoSend: false
-        responseObject: Local.clarifying_response
+        autoSend: true
+        messages: Local.clarifying_questions_message
+    - kind: Question
+      variable: Local.clarifying_answers
+      id: ask-clarifying-answers
+      entity: StringPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        Please answer the clarifying questions above in one message.
+        Provide numbered answers matching the questions.
     - kind: SetVariable
-      id: count-clarifying-questions
-      variable: Local.total_questions
-      value: =CountRows(Local.clarifying_response.questions)
-    - kind: ConditionGroup
-      id: clarifying-questions-loop
-      conditions:
-        - condition: '=((Local.total_questions > 0) && (Local.clarifying_qa_iterator < Local.total_questions))'
-          actions:
-            - kind: SetVariable
-              id: increment-clarifying-index
-              variable: Local.clarifying_qa_iterator
-              value: =Local.clarifying_qa_iterator + 1
-            - kind: SetVariable
-              id: set-current-clarifying-question
-              variable: Local.current_clarifying_question
-              value: =Index(Local.clarifying_response.questions, Local.clarifying_qa_iterator).Value
-            - kind: Question
-              variable: Local.current_clarifying_answer
-              id: ask-clarifying-answer
-              entity: StringPrebuiltEntity
-              skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-              prompt: "{Local.current_clarifying_question}"
-            - kind: SetVariable
-              id: append-enriched-query
-              variable: Local.enriched_query
-              value: |-
-                =Concatenate(
-                  Local.enriched_query,Char(10),
-                  "Q",Local.clarifying_qa_iterator,": ", Local.current_clarifying_question, Char(10),
-                  "A",Local.clarifying_qa_iterator,": ", Local.current_clarifying_answer , Char(10)
-                )
-            - kind: GotoAction
-              id: goto-clarifying-loop
-              actionId: clarifying-questions-loop
-          id: clarifying-loop-continue
-      elseActions: []
+      id: append-enriched-query
+      variable: Local.enriched_query
+      value: =Concatenate(Local.enriched_query, Char(10), "Clarifying questions:", Char(10), Concat(Local.clarifying_questions_message, Text, Char(10)), Char(10), "Your answers:", Char(10), Local.clarifying_answers, Char(10))
     - kind: SendActivity
       activity: "Enriched queries: {Local.enriched_query}"
       id: show-enriched-query
@@ -177,7 +152,7 @@ trigger:
     - kind: ConditionGroup
       id: iteration-loop
       conditions:
-        - condition: '=((Local.total_iterations > 0) && (Local.current_iteration_index < Local.total_iterations))'
+        - condition: =((Local.total_iterations > 0) && (Local.current_iteration_index < Local.total_iterations))
           actions:
             - kind: SetVariable
               id: increment-iteration-index
@@ -213,7 +188,7 @@ trigger:
             - kind: SetVariable
               id: build-serp-query-pairs
               variable: Local.serp_query_pairs
-              value: '=ForAll(Sequence(CountRows(Local.serp_queries.queries)), { query: Index(Local.serp_queries.queries, Value).Value, goal: Index(Local.serp_queries.research_goals, Value).Value })'
+              value: "=ForAll(Sequence(CountRows(Local.serp_queries.queries)), { query: Index(Local.serp_queries.queries, Value).Value, goal: Index(Local.serp_queries.research_goals, Value).Value })"
             - kind: SendActivity
               activity: 📝 Generated {CountRows(Local.serp_queries.queries)} search queries
               id: notify-queries-generated
@@ -228,7 +203,7 @@ trigger:
             - kind: ConditionGroup
               id: query-loop
               conditions:
-                - condition: '=((Local.total_queries > 0) && (Local.query_index < Local.total_queries))'
+                - condition: =((Local.total_queries > 0) && (Local.query_index < Local.total_queries))
                   actions:
                     - kind: SetVariable
                       id: increment-query-index
@@ -324,4 +299,3 @@ trigger:
 id: ""
 name: Deep-Research-V2
 description: ""
-

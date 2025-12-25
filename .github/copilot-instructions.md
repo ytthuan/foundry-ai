@@ -3,7 +3,6 @@
 ## Project Overview
 This is a **Microsoft Foundry workflow** that replicates OpenAI's DeepResearch feature using recursive AI agents. The project consists of:
 - **`ai-foundry-new/current-deep-research-workflow.yaml`** - The **current working implementation** that is actually deployed and running with Microsoft Foundry
-- **`n8n-workflow/deep-research.json`** - The **original n8n workflow** 
 - Six specialized agents in `ai-foundry-new/agents/` for clarifying questions, SERP queries, web search, learning extraction, and report generation
 - JSON schemas in `ai-foundry-new/schemas/` for structured agent outputs
 
@@ -11,7 +10,6 @@ This is a **Microsoft Foundry workflow** that replicates OpenAI's DeepResearch f
 | File | Status | Purpose |
 |------|--------|---------|
 | `current-deep-research-workflow.yaml` | ✅ **Working** | The actual production workflow running on Microsoft Foundry |
-| `deep-research.json` (n8n) | 📋 **Reference** | Original source workflow being converted |
 
 When making changes to the **production workflow**, edit `current-deep-research-workflow.yaml`.
 

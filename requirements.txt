@@ -1,0 +1,6 @@
+azure-identity
+azure-ai-projects>=2.0.0b1
+python-dotenv
+Flask
+openai
+chainlit
