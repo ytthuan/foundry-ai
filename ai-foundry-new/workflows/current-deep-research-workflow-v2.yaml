@@ -13,9 +13,9 @@ trigger:
         - variable: Local.current_iteration
           value: =0
         - variable: Local.depth
-          value: =2
+          value: =1
         - variable: Local.breadth
-          value: =3
+          value: =1
         - variable: Local.enriched_query
           value: =""
         - variable: Local.clarifying_questions_message
@@ -67,28 +67,6 @@ trigger:
         What would you like to research?
 
         Please provide a detailed description of the topic.
-    - kind: Question
-      variable: Local.depth
-      id: question-depth
-      entity: NumberPrebuiltEntity
-      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-      prompt: |-
-        📊 **Research Depth**
-
-        How many research iterations would you like? (1-5 recommended)
-
-        Higher depth = more thorough research but takes longer.
-    - kind: Question
-      variable: Local.breadth
-      id: question-breadth
-      entity: NumberPrebuiltEntity
-      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-      prompt: |-
-        🔍 **Research Breadth**
-
-        How many search queries per iteration? (1-5 recommended)
-
-        Higher breadth = wider coverage but takes longer.
     - kind: SetVariable
       id: seed-enriched-query
       variable: Local.enriched_query

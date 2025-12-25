@@ -331,21 +331,29 @@ The Deep Research workflow performs the following steps:
 
 ```
 ai-foundry-new/
-├── current-deep-research-workflow.yaml    # Main workflow definition
 ├── agents/
-│   ├── clarifying-questions-agent.yaml  # Generates clarifying questions
-│   ├── serp-query-agent.yaml            # Generates search queries
-│   ├── learnings-agent.yaml             # Extracts learnings from content
-│   ├── report-agent.yaml                # Generates final report
-│   ├── report-title-agent.yaml          # Generates report title/description
-│   └── web-search-agent.yaml            # Performs web searches
-└── schemas/
-    ├── clarifying-questions-schema.json
-    ├── learnings-schema.json
-    ├── report-agent-schema.json
-    ├── report-title-schema.json
-    ├── serp-queries-schema.json
-    └── web-search-agent-schema.json
+│   ├── clarifying-questions-agent.yaml
+│   ├── internal-search-agent.yaml
+│   ├── learnings-agent.yaml
+│   ├── report-agent.yaml
+│   ├── report-title-agent.yaml
+│   ├── serp-query-agent.yaml
+│   └── web-search-agent.yaml
+├── schemas/
+│   ├── clarifying-questions-schema.json
+│   ├── learnings-schema.json
+│   ├── report-agent-schema.json
+│   ├── report-title-schema.json
+│   ├── serp-queries-schema-backup.json
+│   ├── serp-queries-schema.json
+│   └── web-search-agent-schema.json
+└── workflows/
+  ├── current-deep-research-internally-workflow.yaml
+  └── current-deep-research-workflow-v2.yaml
+src/
+└── utils/
+  ├── create_or_update_agents.py
+  └── update_foundry_agents.py
 ```
 
 ## Prerequisites

@@ -114,11 +114,14 @@ def prompt_mode() -> str:
     print("  [1] Create missing agents only")
     print("  [2] Update existing agents only")
     print("  [3] Sync all (create missing, update existing)")
+    print("  [q] Quit")
     while True:
-        choice = input("Enter choice (1/2/3): ").strip()
+        choice = input("Enter choice (1/2/3/q): ").strip()
+        if choice.lower() == "q":
+            return "q"
         if choice in {"1", "2", "3"}:
             return choice
-        print("Invalid choice. Please enter 1, 2, or 3.")
+        print("Invalid choice. Please enter 1, 2, 3, or q to quit.")
 
 
 def prompt_agent_selection(agent_payloads: List[Dict]) -> List[Dict]:
@@ -210,6 +213,9 @@ def main():
 
     while True:
         mode = prompt_mode()
+        if mode == "q":
+            print("👋 Goodbye!")
+            return
         selection = prompt_agent_selection(agent_payloads)
         if not selection:
             print("👋 Goodbye!")
