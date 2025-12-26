@@ -10,7 +10,7 @@ description: ""
 created_at: 1766671054
 definition:
   kind: prompt
-  model: gpt-4.1-nano
+  model: gpt-5-nano
   instructions: |-
     You are an expert researcher.
           

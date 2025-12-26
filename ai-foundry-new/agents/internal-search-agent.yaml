@@ -10,7 +10,7 @@ description: ""
 created_at: 1766414292
 definition:
   kind: prompt
-  model: gpt-5.2-chat
+  model: gpt-5-nano
   instructions: You are the MS docs AI Assistant help to answer the question regarding Microsoft product. Use knowledge tools to answer the question, Do not made up.
   tools:
     - type: mcp

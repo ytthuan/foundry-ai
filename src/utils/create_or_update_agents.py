@@ -9,8 +9,9 @@ Environment:
 
 This script:
     1. Reads every *.yaml file under ai-foundry-new/agents
-    2. Asks whether to create missing agents, update existing agents, or sync (create or update)
+    2. Asks whether to create missing agents, update existing agents, sync, or apply maintenance fixes
     3. Creates/updates agents with model, instructions, tools, and response format
+    4. Maintenance: set MCP tools to require_approval='never' or strip temperature/top_p for GPT-5 models
 """
 
 import os
@@ -114,14 +115,16 @@ def prompt_mode() -> str:
     print("  [1] Create missing agents only")
     print("  [2] Update existing agents only")
     print("  [3] Sync all (create missing, update existing)")
+    print("  [4] Update MCP tools (require_approval='never')")
+    print("  [5] Remove temperature/top_p for GPT-5 models")
     print("  [q] Quit")
     while True:
-        choice = input("Enter choice (1/2/3/q): ").strip()
+        choice = input("Enter choice (1/2/3/4/5/q): ").strip()
         if choice.lower() == "q":
             return "q"
-        if choice in {"1", "2", "3"}:
+        if choice in {"1", "2", "3", "4", "5"}:
             return choice
-        print("Invalid choice. Please enter 1, 2, 3, or q to quit.")
+        print("Invalid choice. Please enter 1, 2, 3, 4, 5, or q to quit.")
 
 
 def prompt_agent_selection(agent_payloads: List[Dict]) -> List[Dict]:
@@ -158,8 +161,148 @@ def prompt_agent_selection(agent_payloads: List[Dict]) -> List[Dict]:
             return selected
 
 
+def prompt_remote_agent_selection(project_client) -> List[str]:
+    agents = list(project_client.agents.list())
+    if not agents:
+        print("❌ No agents found in the project.")
+        return []
+
+    print("\nAgents in project:")
+    for idx, agent in enumerate(agents, 1):
+        print(f"  [{idx}] {agent.name}")
+    print("  [a] All agents")
+    print("  [q] Quit")
+
+    while True:
+        choice = input("Select agents by number (comma-separated), or 'a' for all, 'q' to quit: ").strip().lower()
+        if choice == "q":
+            return []
+        if choice == "a":
+            return [agent.name for agent in agents]
+        parts = [c.strip() for c in choice.split(",") if c.strip()]
+        indices: List[int] = []
+        try:
+            for part in parts:
+                indices.append(int(part))
+        except ValueError:
+            print("Invalid entry. Use numbers, 'a', or 'q'.")
+            continue
+        selected: List[str] = []
+        for i in indices:
+            if 1 <= i <= len(agents):
+                selected.append(agents[i - 1].name)
+            else:
+                print(f"Index out of range: {i}")
+                selected = []
+                break
+        if selected:
+            return selected
+
+
 def list_existing_agents(project_client) -> Dict[str, str]:
     return {agent.name: agent.id for agent in project_client.agents.list()}
+
+
+def get_latest_agent_version(project_client, agent_name: str):
+    versions = list(project_client.agents.list_versions(agent_name=agent_name))
+    if not versions:
+        return None
+
+    def version_key(version):
+        try:
+            return int(version.version)
+        except (TypeError, ValueError):
+            return -1
+
+    return max(versions, key=version_key)
+
+
+def find_mcp_tools(definition) -> List:
+    tools = getattr(definition, "tools", None)
+    if not tools:
+        return []
+
+    return [
+        (idx, tool)
+        for idx, tool in enumerate(tools)
+        if hasattr(tool, "server_label") or (isinstance(tool, dict) and tool.get("type") == "mcp")
+    ]
+
+
+def is_gpt5_model(model_name: Optional[str]) -> bool:
+    return bool(model_name and "gpt-5" in model_name.lower())
+
+
+def update_mcp_tools_to_auto_approve(project_client, agent_details):
+    definition = getattr(agent_details, "definition", None)
+    if not definition:
+        print("⚠️  Skip: no definition available.")
+        return
+
+    current_tools = list(getattr(definition, "tools", None) or [])
+    updated_tools = []
+    changed = False
+
+    for tool in current_tools:
+        if hasattr(tool, "server_label") or (isinstance(tool, dict) and tool.get("type") == "mcp"):
+            updated_tools.append(
+                MCPTool(
+                    server_label=getattr(tool, "server_label", ""),
+                    server_url=getattr(tool, "server_url", ""),
+                    project_connection_id=getattr(tool, "project_connection_id", None),
+                    allowed_tools=getattr(tool, "allowed_tools", None),
+                    require_approval="never",
+                )
+            )
+            changed = True
+        else:
+            updated_tools.append(tool)
+
+    if not changed:
+        print("➡️  Skip: no MCP tools to update.")
+        return
+
+    new_version = project_client.agents.create_version(
+        agent_name=agent_details.name,
+        definition=PromptAgentDefinition(
+            kind=getattr(definition, "kind", None),
+            model=getattr(definition, "model", None),
+            instructions=getattr(definition, "instructions", None),
+            tools=updated_tools or None,
+            temperature=getattr(definition, "temperature", None),
+            top_p=getattr(definition, "top_p", None),
+            text=getattr(definition, "text", None),
+        ),
+        description=getattr(agent_details, "description", None),
+    )
+
+    print(f"   ✅ MCP tools updated; new version {new_version.version}")
+
+
+def remove_temperature_params(project_client, agent_details):
+    definition = getattr(agent_details, "definition", None)
+    if not definition:
+        print("⚠️  Skip: no definition available.")
+        return
+
+    current_tools = list(getattr(definition, "tools", None) or [])
+    model = getattr(definition, "model", None)
+
+    new_version = project_client.agents.create_version(
+        agent_name=agent_details.name,
+        definition=PromptAgentDefinition(
+            kind=getattr(definition, "kind", None),
+            model=model,
+            instructions=getattr(definition, "instructions", None),
+            tools=current_tools or None,
+            temperature=None,
+            top_p=None,
+            text=getattr(definition, "text", None),
+        ),
+        description=getattr(agent_details, "description", None),
+    )
+
+    print(f"   ✅ Temperature/top_p removed; new version {new_version.version}")
 
 
 def process_agent(project_client, mode: str, agent_payload: Dict, path: Path, existing: Dict[str, str]):
@@ -199,15 +342,54 @@ def process_agent(project_client, mode: str, agent_payload: Dict, path: Path, ex
         print(f"   ✅ Created with version {created.version}")
 
 
+def process_mcp_auto_approval(project_client, agent_name: str, existing: Dict[str, str]):
+    if not agent_name:
+        print("⚠️  Skipping entry without agent name.")
+        return
+    if agent_name not in existing:
+        print(f"➡️  Skip (missing remotely): {agent_name}")
+        return
+
+    latest = get_latest_agent_version(project_client, agent_name)
+    if not latest:
+        print(f"⚠️  Unable to fetch versions for {agent_name}")
+        return
+
+    if not find_mcp_tools(getattr(latest, "definition", None)):
+        print(f"➡️  Skip (no MCP tools): {agent_name}")
+        return
+
+    print(f"🔄 Updating MCP tools for '{agent_name}'...")
+    update_mcp_tools_to_auto_approve(project_client, latest)
+
+
+def process_temperature_removal(project_client, agent_name: str, existing: Dict[str, str]):
+    if not agent_name:
+        print("⚠️  Skipping entry without agent name.")
+        return
+    if agent_name not in existing:
+        print(f"➡️  Skip (missing remotely): {agent_name}")
+        return
+
+    latest = get_latest_agent_version(project_client, agent_name)
+    if not latest:
+        print(f"⚠️  Unable to fetch versions for {agent_name}")
+        return
+
+    model_name = getattr(getattr(latest, "definition", None), "model", None)
+    if not is_gpt5_model(model_name):
+        print(f"ℹ️  {agent_name}: model '{model_name}' is not GPT-5; removing temperature/top_p anyway.")
+
+    print(f"🔄 Removing temperature/top_p for '{agent_name}'...")
+    remove_temperature_params(project_client, latest)
+
+
 def main():
     try:
         endpoint = get_endpoint()
     except RuntimeError as err:
         print(f"❌ {err}")
         return
-
-    agent_files = load_agent_files()
-    agent_payloads = load_agent_payloads(agent_files)
 
     credential = DefaultAzureCredential()
 
@@ -216,15 +398,29 @@ def main():
         if mode == "q":
             print("👋 Goodbye!")
             return
-        selection = prompt_agent_selection(agent_payloads)
-        if not selection:
-            print("👋 Goodbye!")
-            return
 
         with AIProjectClient(endpoint=endpoint, credential=credential) as project_client:
-            existing_agents = list_existing_agents(project_client)
-            for info in selection:
-                process_agent(project_client, mode, info["payload"], info["path"], existing_agents)
+            if mode in {"4", "5"}:
+                remote_selection = prompt_remote_agent_selection(project_client)
+                if not remote_selection:
+                    print("👋 Goodbye!")
+                    return
+                existing_agents = list_existing_agents(project_client)
+                for agent_name in remote_selection:
+                    if mode == "4":
+                        process_mcp_auto_approval(project_client, agent_name, existing_agents)
+                    else:
+                        process_temperature_removal(project_client, agent_name, existing_agents)
+            else:
+                agent_files = load_agent_files()
+                agent_payloads = load_agent_payloads(agent_files)
+                selection = prompt_agent_selection(agent_payloads)
+                if not selection:
+                    print("👋 Goodbye!")
+                    return
+                existing_agents = list_existing_agents(project_client)
+                for info in selection:
+                    process_agent(project_client, mode, info["payload"], info["path"], existing_agents)
 
         again = input("\nRun another operation? (y/n): ").strip().lower()
         if again != "y":
