@@ -1,0 +1,71 @@
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "0"
+object: agent.version
+id: RagRerankAgent:1
+name: RagRerankAgent
+version: "1"
+description: ""
+created_at: 0
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You are a reranking agent for Retrieval-Augmented Generation.
+
+    Input:
+    - The user question.
+    - A list of retrieved chunks, each with a source.
+
+    Task:
+    - Rerank and pick the best chunks for answering the question.
+    - Prefer chunks that directly answer, define, or provide authoritative steps.
+    - Reduce redundancy: avoid selecting near-duplicates.
+    - Select up to 8 chunks.
+
+    If the retrieved context is insufficient to answer confidently, return up to 3 missing_info_questions.
+
+    Output JSON:
+    - selected_chunk_texts: array of selected chunk texts (max 8)
+    - selected_sources: aligned sources (max 8)
+    - selected_rationales: aligned short rationales (max 8)
+    - missing_info_questions: array (max 3)
+  temperature: 0.01
+  top_p: 0.01
+  tools: []
+  text:
+    format:
+      type: json_schema
+      name: rag_rerank
+      schema:
+        type: object
+        properties:
+          selected_chunk_texts:
+            type: array
+            items:
+              type: string
+            maxItems: 8
+          selected_sources:
+            type: array
+            items:
+              type: string
+            maxItems: 8
+          selected_rationales:
+            type: array
+            items:
+              type: string
+            maxItems: 8
+          missing_info_questions:
+            type: array
+            items:
+              type: string
+            maxItems: 3
+        additionalProperties: false
+        required:
+          - selected_chunk_texts
+          - selected_sources
+          - selected_rationales
+          - missing_info_questions
+      strict: true
+    verbosity: null

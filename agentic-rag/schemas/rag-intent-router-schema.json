@@ -1,0 +1,31 @@
+{
+  "name": "rag_intent_router",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "should_run_rag": {
+        "type": "boolean",
+        "description": "True if the user intends to ask a question that should be answered using internal indexed content (e.g., an Azure AI Search index)."
+      },
+      "route": {
+        "type": "string",
+        "description": "Routing decision.",
+        "enum": [
+          "run_rag",
+          "no_rag"
+        ]
+      },
+      "assistant_message": {
+        "type": "string",
+        "description": "Message to send when route=no_rag (greeting, thanks, off-topic, or needs more detail)."
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "should_run_rag",
+      "route",
+      "assistant_message"
+    ]
+  },
+  "strict": true
+}

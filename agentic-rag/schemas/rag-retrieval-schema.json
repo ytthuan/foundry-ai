@@ -1,0 +1,35 @@
+{
+  "name": "rag_retrieval",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "query_used": {
+        "type": "string",
+        "description": "The query that was actually executed."
+      },
+      "chunk_texts": {
+        "type": "array",
+        "description": "Retrieved chunk texts in rank order.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 20
+      },
+      "chunk_sources": {
+        "type": "array",
+        "description": "Source identifiers aligned with chunk_texts (e.g., title - url, or docId).",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 20
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "query_used",
+      "chunk_texts",
+      "chunk_sources"
+    ]
+  },
+  "strict": true
+}

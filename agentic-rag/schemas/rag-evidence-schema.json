@@ -1,0 +1,69 @@
+{
+  "name": "rag_evidence",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "is_sufficient": {
+        "type": "boolean",
+        "description": "True if the selected chunks are sufficient to answer the user question with high confidence."
+      },
+      "confidence": {
+        "type": "number",
+        "description": "A calibrated confidence score from 0.0 to 1.0 based only on the provided chunks.",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "key_points": {
+        "type": "array",
+        "description": "Up to 8 grounded key points extracted from the selected chunks.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8
+      },
+      "key_point_sources": {
+        "type": "array",
+        "description": "Sources aligned with key_points (same length/order).",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8
+      },
+      "missing_info_questions": {
+        "type": "array",
+        "description": "If evidence is insufficient, ask up to 3 targeted questions about what information is missing.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      },
+      "followup_queries": {
+        "type": "array",
+        "description": "If evidence is insufficient, propose up to 3 follow-up retrieval queries (keywords/short phrases).",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      },
+      "followup_retrieval_goals": {
+        "type": "array",
+        "description": "Goal for each follow-up query, aligned with followup_queries.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "is_sufficient",
+      "confidence",
+      "key_points",
+      "key_point_sources",
+      "missing_info_questions",
+      "followup_queries",
+      "followup_retrieval_goals"
+    ]
+  },
+  "strict": true
+}

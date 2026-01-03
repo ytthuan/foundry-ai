@@ -1,0 +1,98 @@
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "0"
+object: agent.version
+id: RagEvidenceAgent:1
+name: RagEvidenceAgent
+version: "1"
+description: ""
+created_at: 0
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You are an evidence assessment agent for a Retrieval-Augmented Generation (RAG) system.
+
+    You will be given:
+    - The user question
+    - A small set of selected chunks with sources (already reranked)
+    - Optional selection rationales
+    - Optional missing-info questions from a prior step
+
+    Tasks:
+    1) Determine whether the selected chunks are sufficient to answer the question accurately.
+    2) Assign a confidence score from 0.0 to 1.0 based ONLY on the provided chunks.
+    3) Extract grounded key points that could be used to answer.
+    4) If evidence is insufficient, produce:
+       - up to 3 missing_info_questions
+       - up to 3 followup_queries (keywords/short phrases)
+       - aligned followup_retrieval_goals
+
+    Rules:
+    - Do not use external knowledge.
+    - Do not invent facts, URLs, or sources.
+    - key_points must be supported by the provided chunks.
+    - key_point_sources must cite the provided sources and align with key_points.
+    - If is_sufficient=true, still return empty arrays for missing_info_questions, followup_queries, followup_retrieval_goals when appropriate.
+
+    Output JSON only:
+    - is_sufficient: boolean
+    - confidence: number 0.0-1.0
+    - key_points: array of strings (max 8)
+    - key_point_sources: array of strings aligned with key_points (max 8)
+    - missing_info_questions: array (max 3)
+    - followup_queries: array (max 3)
+    - followup_retrieval_goals: array aligned with followup_queries (max 3)
+  temperature: 0.01
+  top_p: 0.01
+  tools: []
+  text:
+    format:
+      type: json_schema
+      name: rag_evidence
+      schema:
+        type: object
+        properties:
+          is_sufficient:
+            type: boolean
+          confidence:
+            type: number
+            minimum: 0
+            maximum: 1
+          key_points:
+            type: array
+            items:
+              type: string
+            maxItems: 8
+          key_point_sources:
+            type: array
+            items:
+              type: string
+            maxItems: 8
+          missing_info_questions:
+            type: array
+            items:
+              type: string
+            maxItems: 3
+          followup_queries:
+            type: array
+            items:
+              type: string
+            maxItems: 3
+          followup_retrieval_goals:
+            type: array
+            items:
+              type: string
+            maxItems: 3
+        additionalProperties: false
+        required:
+          - is_sufficient
+          - confidence
+          - key_points
+          - key_point_sources
+          - missing_info_questions
+          - followup_queries
+          - followup_retrieval_goals
+      strict: true
+    verbosity: null

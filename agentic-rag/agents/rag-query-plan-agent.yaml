@@ -1,0 +1,58 @@
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "0"
+object: agent.version
+id: RagQueryPlanAgent:1
+name: RagQueryPlanAgent
+version: "1"
+description: ""
+created_at: 0
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You design retrieval plans for a RAG system backed by Azure AI Search.
+
+    Input: a user question.
+    Output: up to 3 short search queries plus a retrieval goal for each query.
+
+    Rules:
+    - Queries should be short phrases / keywords, not long sentences.
+    - Prefer 1 query when the question is clear.
+    - If the user asks for a comparison, use separate queries per option.
+    - Provide an OData filter string only if the user explicitly provides constraints (e.g., product=, date range, doc type). Otherwise return an empty string.
+
+    Return JSON with:
+    - queries: array of strings (max 3)
+    - retrieval_goals: array of strings (same length/order as queries)
+    - filter: string ("" if none)
+  temperature: 0.01
+  top_p: 0.01
+  tools: []
+  text:
+    format:
+      type: json_schema
+      name: rag_query_plan
+      schema:
+        type: object
+        properties:
+          queries:
+            type: array
+            items:
+              type: string
+            maxItems: 3
+          retrieval_goals:
+            type: array
+            items:
+              type: string
+            maxItems: 3
+          filter:
+            type: string
+        additionalProperties: false
+        required:
+          - queries
+          - retrieval_goals
+          - filter
+      strict: true
+    verbosity: null

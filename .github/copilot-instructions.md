@@ -60,6 +60,12 @@ This repo contains multiple Microsoft Foundry workflow projects. The **canonical
 ## Utilities
 
 - [src/utils/create_or_update_agents.py](../src/utils/create_or_update_agents.py) loads agent YAMLs and creates/updates them in Azure AI Foundry (requires `AZURE_AI_PROJECT_ENDPOINT`/`AZURE_AIPROJECT_ENDPOINT`, DefaultAzureCredential, optional .env).
+- When run python code, always use a virtual environment to manage dependencies, code execution:
+	```bash
+	
+	source .venv/bin/activate && \<your_python_command_here>
+	
+	```
 
 ## Quick Test Tips
 

@@ -1,0 +1,305 @@
+kind: workflow
+trigger:
+  kind: OnConversationStart
+  id: trigger_wf
+  actions:
+    - kind: SetMultipleVariables
+      id: init-variables
+      assignments:
+        - variable: Local.current_date_time
+          value: =Now()
+        - variable: Local.user_question
+          value: =""
+        - variable: Local.intent_router_input
+          value: =""
+        - variable: Local.intent
+          value: ={}
+        - variable: Local.query_plan
+          value: ={}
+        - variable: Local.query_index
+          value: =0
+        - variable: Local.total_queries
+          value: =0
+        - variable: Local.current_query
+          value: =""
+        - variable: Local.current_goal
+          value: =""
+        - variable: Local.current_filter
+          value: =""
+        - variable: Local.retrieval
+          value: ={}
+        - variable: Local.retrieval_input
+          value: =""
+        - variable: Local.chunk_pairs
+          value: =[]
+        - variable: Local.retrieved_context
+          value: =""
+        - variable: Local.rerank_input
+          value: =""
+        - variable: Local.rerank
+          value: ={}
+        - variable: Local.evidence_input
+          value: =""
+        - variable: Local.evidence
+          value: ={}
+        - variable: Local.max_retries
+          value: =1
+        - variable: Local.retry_count
+          value: =0
+        - variable: Local.followup_total_queries
+          value: =0
+        - variable: Local.followup_query_index
+          value: =0
+        - variable: Local.followup_current_query
+          value: =""
+        - variable: Local.followup_current_goal
+          value: =""
+        - variable: Local.answer_input
+          value: =""
+        - variable: Local.final_answer
+          value: ={}
+    - kind: Question
+      variable: Local.user_question
+      id: ask-user-question
+      entity: StringPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        What would you like to know?
+    - kind: SetVariable
+      id: build-intent-router-input
+      variable: Local.intent_router_input
+      value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User message:", Char(10), Local.user_question)
+    - kind: InvokeAzureAgent
+      id: invoke-intent-router
+      agent:
+        name: RagIntentRouterAgent
+      input:
+        messages: =Local.intent_router_input
+      output:
+        autoSend: false
+        responseObject: Local.intent
+    - kind: ConditionGroup
+      id: intent-route
+      conditions:
+        - condition: =Not(Local.intent.should_run_rag)
+          actions:
+            - kind: SendActivity
+              id: intent-no-rag-response
+              activity: "{Local.intent.assistant_message}"
+            - kind: EndConversation
+              id: end-no-rag
+          id: intent-route-no-rag
+      elseActions: []
+    - kind: InvokeAzureAgent
+      id: invoke-query-plan
+      agent:
+        name: RagQueryPlanAgent
+      input:
+        messages: =Local.user_question
+      output:
+        autoSend: false
+        responseObject: Local.query_plan
+    - kind: SetVariable
+      id: set-current-filter
+      variable: Local.current_filter
+      value: =Coalesce(Local.query_plan.filter, "")
+    - kind: SetVariable
+      id: set-total-queries
+      variable: Local.total_queries
+      value: =CountRows(Local.query_plan.queries)
+    - kind: SetVariable
+      id: reset-query-index
+      variable: Local.query_index
+      value: =0
+    - kind: SetVariable
+      id: reset-retrieved-context
+      variable: Local.retrieved_context
+      value: =""
+    - kind: SetVariable
+      id: reset-retry-count
+      variable: Local.retry_count
+      value: =0
+    - kind: ConditionGroup
+      id: query-loop
+      conditions:
+        - condition: =((Local.total_queries > 0) && (Local.query_index < Local.total_queries))
+          actions:
+            - kind: SetVariable
+              id: increment-query-index
+              variable: Local.query_index
+              value: =Local.query_index + 1
+            - kind: SetVariable
+              id: set-current-query
+              variable: Local.current_query
+              value: =Index(Local.query_plan.queries, Local.query_index).Value
+            - kind: SetVariable
+              id: set-current-goal
+              variable: Local.current_goal
+              value: =Index(Local.query_plan.retrieval_goals, Local.query_index).Value
+            - kind: SendActivity
+              activity: "Retrieving context ({Local.query_index}/{Local.total_queries}): {Local.current_query}"
+              id: notify-retrieval
+            - kind: SetVariable
+              id: build-retrieval-input
+              variable: Local.retrieval_input
+              value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question: ", Local.user_question, Char(10), "Query: ", Local.current_query, Char(10), "Goal: ", Local.current_goal, Char(10), "Filter: ", Local.current_filter)'
+            - kind: InvokeAzureAgent
+              id: invoke-retriever
+              agent:
+                name: RagRetrieverAgent
+              input:
+                messages: =Local.retrieval_input
+              output:
+                autoSend: false
+                responseObject: Local.retrieval
+            - kind: SetVariable
+              id: build-chunk-pairs
+              variable: Local.chunk_pairs
+              value: "=ForAll(Sequence(Min(CountRows(Local.retrieval.chunk_texts), CountRows(Local.retrieval.chunk_sources))), { idx: Value, text: Index(Local.retrieval.chunk_texts, Value).Value, source: Index(Local.retrieval.chunk_sources, Value).Value })"
+            - kind: SetVariable
+              id: append-retrieved-context
+              variable: Local.retrieved_context
+              value: '=Concatenate(Local.retrieved_context, Char(10), "<retrieval>", Char(10), "Query Used: ", Coalesce(Local.retrieval.query_used, Local.current_query), Char(10), Concat(Local.chunk_pairs, Concatenate("Chunk ", Text(idx), Char(10), text, Char(10), "Source: ", source, Char(10)), Char(10)), "</retrieval>", Char(10))'
+            - kind: GotoAction
+              id: goto-query-loop
+              actionId: query-loop
+          id: query-loop-continue
+      elseActions: []
+    - kind: SetVariable
+      id: build-rerank-input
+      variable: Local.rerank_input
+      value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question:", Char(10), Local.user_question, Char(10), Char(10), "Retrieved chunks:", Char(10), Local.retrieved_context)'
+    - kind: InvokeAzureAgent
+      id: invoke-reranker
+      agent:
+        name: RagRerankAgent
+      input:
+        messages: =Local.rerank_input
+      output:
+        autoSend: false
+        responseObject: Local.rerank
+    - kind: SetVariable
+      id: build-evidence-input
+      variable: Local.evidence_input
+      value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question:", Char(10), Local.user_question, Char(10), Char(10), "Selected chunks:", Char(10), "<chunks>", Char(10), Concat(Local.rerank.selected_chunk_texts, Value, Char(10)), Char(10), "</chunks>", Char(10), Char(10), "Sources:", Char(10), Concat(Local.rerank.selected_sources, Value, Char(10)), Char(10), Char(10), "Selection rationales:", Char(10), Concat(Local.rerank.selected_rationales, Value, Char(10)), Char(10), Char(10), "Missing info questions (if any):", Char(10), Concat(Local.rerank.missing_info_questions, Value, Char(10)))'
+    - kind: InvokeAzureAgent
+      id: invoke-evidence-agent
+      agent:
+        name: RagEvidenceAgent
+      input:
+        messages: =Local.evidence_input
+      output:
+        autoSend: false
+        responseObject: Local.evidence
+    - kind: ConditionGroup
+      id: maybe-retry-retrieval
+      conditions:
+        - condition: =((Not(Local.evidence.is_sufficient)) && (Local.retry_count < Local.max_retries) && (CountRows(Local.evidence.followup_queries) > 0))
+          actions:
+            - kind: SetVariable
+              id: increment-retry-count
+              variable: Local.retry_count
+              value: =Local.retry_count + 1
+            - kind: SendActivity
+              id: notify-retry
+              activity: "Evidence insufficient (confidence={Text(Local.evidence.confidence)}). Running targeted follow-up retrieval..."
+            - kind: SetVariable
+              id: set-followup-total-queries
+              variable: Local.followup_total_queries
+              value: =Min(CountRows(Local.evidence.followup_queries), CountRows(Local.evidence.followup_retrieval_goals))
+            - kind: SetVariable
+              id: reset-followup-query-index
+              variable: Local.followup_query_index
+              value: =0
+            - kind: ConditionGroup
+              id: followup-query-loop
+              conditions:
+                - condition: =((Local.followup_total_queries > 0) && (Local.followup_query_index < Local.followup_total_queries))
+                  actions:
+                    - kind: SetVariable
+                      id: increment-followup-query-index
+                      variable: Local.followup_query_index
+                      value: =Local.followup_query_index + 1
+                    - kind: SetVariable
+                      id: set-followup-current-query
+                      variable: Local.followup_current_query
+                      value: =Index(Local.evidence.followup_queries, Local.followup_query_index).Value
+                    - kind: SetVariable
+                      id: set-followup-current-goal
+                      variable: Local.followup_current_goal
+                      value: =Index(Local.evidence.followup_retrieval_goals, Local.followup_query_index).Value
+                    - kind: SendActivity
+                      activity: "Retrieving follow-up context ({Local.followup_query_index}/{Local.followup_total_queries}): {Local.followup_current_query}"
+                      id: notify-followup-retrieval
+                    - kind: SetVariable
+                      id: build-followup-retrieval-input
+                      variable: Local.retrieval_input
+                      value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question: ", Local.user_question, Char(10), "Query: ", Local.followup_current_query, Char(10), "Goal: ", Local.followup_current_goal, Char(10), "Filter: ", Local.current_filter)'
+                    - kind: InvokeAzureAgent
+                      id: invoke-followup-retriever
+                      agent:
+                        name: RagRetrieverAgent
+                      input:
+                        messages: =Local.retrieval_input
+                      output:
+                        autoSend: false
+                        responseObject: Local.retrieval
+                    - kind: SetVariable
+                      id: build-followup-chunk-pairs
+                      variable: Local.chunk_pairs
+                      value: "=ForAll(Sequence(Min(CountRows(Local.retrieval.chunk_texts), CountRows(Local.retrieval.chunk_sources))), { idx: Value, text: Index(Local.retrieval.chunk_texts, Value).Value, source: Index(Local.retrieval.chunk_sources, Value).Value })"
+                    - kind: SetVariable
+                      id: append-followup-retrieved-context
+                      variable: Local.retrieved_context
+                      value: '=Concatenate(Local.retrieved_context, Char(10), "<retrieval>", Char(10), "Query Used: ", Coalesce(Local.retrieval.query_used, Local.followup_current_query), Char(10), Concat(Local.chunk_pairs, Concatenate("Chunk ", Text(idx), Char(10), text, Char(10), "Source: ", source, Char(10)), Char(10)), "</retrieval>", Char(10))'
+                    - kind: GotoAction
+                      id: goto-followup-query-loop
+                      actionId: followup-query-loop
+                  id: followup-query-loop-continue
+              elseActions: []
+            - kind: SetVariable
+              id: rebuild-rerank-input-after-retry
+              variable: Local.rerank_input
+              value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question:", Char(10), Local.user_question, Char(10), Char(10), "Retrieved chunks:", Char(10), Local.retrieved_context)'
+            - kind: InvokeAzureAgent
+              id: invoke-reranker-after-retry
+              agent:
+                name: RagRerankAgent
+              input:
+                messages: =Local.rerank_input
+              output:
+                autoSend: false
+                responseObject: Local.rerank
+            - kind: SetVariable
+              id: rebuild-evidence-input-after-retry
+              variable: Local.evidence_input
+              value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question:", Char(10), Local.user_question, Char(10), Char(10), "Selected chunks:", Char(10), "<chunks>", Char(10), Concat(Local.rerank.selected_chunk_texts, Value, Char(10)), Char(10), "</chunks>", Char(10), Char(10), "Sources:", Char(10), Concat(Local.rerank.selected_sources, Value, Char(10)), Char(10), Char(10), "Selection rationales:", Char(10), Concat(Local.rerank.selected_rationales, Value, Char(10)), Char(10), Char(10), "Missing info questions (if any):", Char(10), Concat(Local.rerank.missing_info_questions, Value, Char(10)))'
+            - kind: InvokeAzureAgent
+              id: invoke-evidence-agent-after-retry
+              agent:
+                name: RagEvidenceAgent
+              input:
+                messages: =Local.evidence_input
+              output:
+                autoSend: false
+                responseObject: Local.evidence
+          id: retry-if-insufficient
+      elseActions: []
+    - kind: SetVariable
+      id: build-answer-input
+      variable: Local.answer_input
+      value: '=Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "User question:", Char(10), Local.user_question, Char(10), Char(10), "Reranked chunks:", Char(10), "<chunks>", Char(10), Concat(Local.rerank.selected_chunk_texts, Value, Char(10)), Char(10), "</chunks>", Char(10), Char(10), "Sources:", Char(10), Concat(Local.rerank.selected_sources, Value, Char(10)), Char(10), Char(10), "Evidence assessment:", Char(10), "is_sufficient=", Text(Local.evidence.is_sufficient), Char(10), "confidence=", Text(Local.evidence.confidence), Char(10), Char(10), "If missing info questions exist:", Char(10), Concat(Local.evidence.missing_info_questions, Value, Char(10)))'
+    - kind: InvokeAzureAgent
+      id: invoke-answer
+      agent:
+        name: RagAnswerAgent
+      input:
+        messages: =Local.answer_input
+      output:
+        autoSend: true
+        responseObject: Local.final_answer
+    - kind: EndConversation
+      id: end-workflow
+id: ""
+name: Agentic-RAG
+description: ""

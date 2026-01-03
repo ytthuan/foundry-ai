@@ -1,0 +1,26 @@
+{
+  "name": "rag_answer",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "answer_markdown": {
+        "type": "string",
+        "description": "Final answer in Markdown, grounded in provided sources."
+      },
+      "sources": {
+        "type": "array",
+        "description": "Sources actually used in the answer (deduped, max 10).",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 10
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "answer_markdown",
+      "sources"
+    ]
+  },
+  "strict": true
+}

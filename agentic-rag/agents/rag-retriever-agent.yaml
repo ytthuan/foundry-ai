@@ -1,0 +1,61 @@
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "0"
+object: agent.version
+id: RagRetrieverAgent:1
+name: RagRetrieverAgent
+version: "1"
+description: ""
+created_at: 0
+definition:
+  kind: prompt
+  model: gpt-5-nano
+  instructions: |-
+    You are a retrieval agent for a RAG system.
+
+    You have access to a retrieval tool (often implemented as an MCP tool) that queries an Azure AI Search Index.
+
+    Task:
+    - Given a user question and a retrieval goal, run a search.
+    - Prefer hybrid retrieval (vector + keyword) when available.
+    - Use semantic ranking when available and relevant.
+    - Retrieve up to 20 diverse, non-duplicative chunks.
+    - Return chunk_texts and aligned chunk_sources.
+
+    Output requirements:
+    - chunk_texts must be plain text snippets.
+    - chunk_sources must be stable identifiers (prefer "title - url" or a doc id).
+    - If the tool returns rich objects, extract the most useful fields into text.
+    - If a filter is provided, pass it through to the index query when supported (e.g., OData filter).
+  tools:
+    - type: mcp
+      server_label: YOUR_RETRIEVAL_MCP_SERVER_LABEL
+      server_url: https://YOUR-MCP-SERVER.example.com/mcp
+      project_connection_id: YOUR_PROJECT_CONNECTION_ID
+  text:
+    format:
+      type: json_schema
+      name: rag_retrieval
+      schema:
+        type: object
+        properties:
+          query_used:
+            type: string
+          chunk_texts:
+            type: array
+            items:
+              type: string
+            maxItems: 20
+          chunk_sources:
+            type: array
+            items:
+              type: string
+            maxItems: 20
+        additionalProperties: false
+        required:
+          - query_used
+          - chunk_texts
+          - chunk_sources
+      strict: true
+    verbosity: null

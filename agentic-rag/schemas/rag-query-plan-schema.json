@@ -1,0 +1,35 @@
+{
+  "name": "rag_query_plan",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "queries": {
+        "type": "array",
+        "description": "Search queries to run against Azure AI Search (keywords or short phrases).",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      },
+      "retrieval_goals": {
+        "type": "array",
+        "description": "Goal for each query, same order as queries.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      },
+      "filter": {
+        "type": "string",
+        "description": "Optional OData filter for Azure AI Search (empty string if none)."
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "queries",
+      "retrieval_goals",
+      "filter"
+    ]
+  },
+  "strict": true
+}

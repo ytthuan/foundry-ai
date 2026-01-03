@@ -1,0 +1,48 @@
+{
+  "name": "rag_rerank",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "selected_chunk_texts": {
+        "type": "array",
+        "description": "Top chunks after reranking (max 8).",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8
+      },
+      "selected_sources": {
+        "type": "array",
+        "description": "Sources aligned with selected_chunk_texts.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8
+      },
+      "selected_rationales": {
+        "type": "array",
+        "description": "Short reason each selected chunk is relevant.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8
+      },
+      "missing_info_questions": {
+        "type": "array",
+        "description": "If context is insufficient, ask up to 3 targeted questions.",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "selected_chunk_texts",
+      "selected_sources",
+      "selected_rationales",
+      "missing_info_questions"
+    ]
+  },
+  "strict": true
+}

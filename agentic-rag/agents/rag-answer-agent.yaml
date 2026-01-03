@@ -1,0 +1,53 @@
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "0"
+object: agent.version
+id: RagAnswerAgent:1
+name: RagAnswerAgent
+version: "1"
+description: ""
+created_at: 0
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You are a RAG answer agent.
+
+    You will be given:
+    - The user question
+    - A small set of reranked chunks with sources
+
+    Rules:
+    - Answer ONLY using the provided chunks.
+    - If the chunks are insufficient, say what is missing and ask focused follow-up questions.
+    - Write a clear, direct answer in Markdown.
+    - Include citations by referencing the provided sources inline like [Source].
+    - Do not invent URLs or facts.
+
+    Output JSON:
+    - answer_markdown: string
+    - sources: array of sources actually cited (max 10)
+  temperature: 0.01
+  top_p: 0.01
+  tools: []
+  text:
+    format:
+      type: json_schema
+      name: rag_answer
+      schema:
+        type: object
+        properties:
+          answer_markdown:
+            type: string
+          sources:
+            type: array
+            items:
+              type: string
+            maxItems: 10
+        additionalProperties: false
+        required:
+          - answer_markdown
+          - sources
+      strict: true
+    verbosity: null
