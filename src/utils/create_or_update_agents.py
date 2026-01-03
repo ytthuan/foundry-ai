@@ -8,7 +8,7 @@ Environment:
     - Optional: .env file alongside the repo
 
 This script:
-    1. Reads every *.yaml file under ai-foundry-new/agents
+    1. Reads every *.yaml file under msfoundry-deep-research/agents
     2. Asks whether to create missing agents, update existing agents, sync, or apply maintenance fixes
     3. Creates/updates agents with model, instructions, tools, and response format
     4. Maintenance: set MCP tools to require_approval='never' or strip temperature/top_p for GPT-5 models
@@ -33,7 +33,7 @@ load_dotenv()
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-AGENTS_DIR = PROJECT_ROOT / "ai-foundry-new" / "agents"
+AGENTS_DIR = PROJECT_ROOT / "msfoundry-deep-research" / "agents"
 
 
 def get_endpoint() -> str:
@@ -44,11 +44,16 @@ def get_endpoint() -> str:
 
 
 def load_agent_files() -> List[Path]:
-    if not AGENTS_DIR.exists():
-        raise FileNotFoundError(f"Agents directory not found: {AGENTS_DIR}")
-    files = sorted(AGENTS_DIR.glob("*.yaml"))
+    agents_dir = AGENTS_DIR
+    if not agents_dir.exists():
+        legacy = PROJECT_ROOT / "ai-foundry-new" / "agents"
+        if legacy.exists():
+            agents_dir = legacy
+        else:
+            raise FileNotFoundError(f"Agents directory not found: {agents_dir}")
+    files = sorted(agents_dir.glob("*.yaml"))
     if not files:
-        raise FileNotFoundError(f"No YAML files found in {AGENTS_DIR}")
+        raise FileNotFoundError(f"No YAML files found in {agents_dir}")
     return files
 
 
@@ -199,11 +204,11 @@ def prompt_remote_agent_selection(project_client) -> List[str]:
             return selected
 
 
-def list_existing_agents(project_client) -> Dict[str, str]:
+def list_existing_agents(project_client: AIProjectClient) -> Dict[str, str]:
     return {agent.name: agent.id for agent in project_client.agents.list()}
 
 
-def get_latest_agent_version(project_client, agent_name: str):
+def get_latest_agent_version(project_client: AIProjectClient, agent_name: str):
     versions = list(project_client.agents.list_versions(agent_name=agent_name))
     if not versions:
         return None
@@ -233,7 +238,7 @@ def is_gpt5_model(model_name: Optional[str]) -> bool:
     return bool(model_name and "gpt-5" in model_name.lower())
 
 
-def update_mcp_tools_to_auto_approve(project_client, agent_details):
+def update_mcp_tools_to_auto_approve(project_client: AIProjectClient, agent_details):
     definition = getattr(agent_details, "definition", None)
     if not definition:
         print("⚠️  Skip: no definition available.")
@@ -272,14 +277,14 @@ def update_mcp_tools_to_auto_approve(project_client, agent_details):
             temperature=getattr(definition, "temperature", None),
             top_p=getattr(definition, "top_p", None),
             text=getattr(definition, "text", None),
-        ),
+        ), # type: ignore
         description=getattr(agent_details, "description", None),
     )
 
     print(f"   ✅ MCP tools updated; new version {new_version.version}")
 
 
-def remove_temperature_params(project_client, agent_details):
+def remove_temperature_params(project_client: AIProjectClient, agent_details):
     definition = getattr(agent_details, "definition", None)
     if not definition:
         print("⚠️  Skip: no definition available.")
@@ -298,14 +303,14 @@ def remove_temperature_params(project_client, agent_details):
             temperature=None,
             top_p=None,
             text=getattr(definition, "text", None),
-        ),
+        ), # type: ignore
         description=getattr(agent_details, "description", None),
     )
 
     print(f"   ✅ Temperature/top_p removed; new version {new_version.version}")
 
 
-def process_agent(project_client, mode: str, agent_payload: Dict, path: Path, existing: Dict[str, str]):
+def process_agent(project_client: AIProjectClient, mode: str, agent_payload: Dict, path: Path, existing: Dict[str, str]):
     agent_name = agent_payload.get("name")
     description = agent_payload.get("description") or agent_payload.get("metadata", {}).get("description")
     definition_block = agent_payload.get("definition")
@@ -339,10 +344,10 @@ def process_agent(project_client, mode: str, agent_payload: Dict, path: Path, ex
             definition=definition,
             description=description,
         )
-        print(f"   ✅ Created with version {created.version}")
+        print(f"   ✅ Created with version {created.versions.get('version', 'N/A')}")
 
 
-def process_mcp_auto_approval(project_client, agent_name: str, existing: Dict[str, str]):
+def process_mcp_auto_approval(project_client: AIProjectClient, agent_name: str, existing: Dict[str, str]):
     if not agent_name:
         print("⚠️  Skipping entry without agent name.")
         return
@@ -363,7 +368,7 @@ def process_mcp_auto_approval(project_client, agent_name: str, existing: Dict[st
     update_mcp_tools_to_auto_approve(project_client, latest)
 
 
-def process_temperature_removal(project_client, agent_name: str, existing: Dict[str, str]):
+def process_temperature_removal(project_client: AIProjectClient, agent_name: str, existing: Dict[str, str]):
     if not agent_name:
         print("⚠️  Skipping entry without agent name.")
         return

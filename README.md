@@ -330,7 +330,7 @@ The Deep Research workflow performs the following steps:
 ## File Structure
 
 ```
-ai-foundry-new/
+msfoundry-deep-research/
 ├── agents/
 │   ├── clarifying-questions-agent.yaml
 │   ├── internal-search-agent.yaml
@@ -350,10 +350,14 @@ ai-foundry-new/
 └── workflows/
   ├── current-deep-research-internally-workflow.yaml
   └── current-deep-research-workflow-v2.yaml
+
+agentic-rag/
+├── agents/
+├── schemas/
+└── workflows/
 src/
 └── utils/
   ├── create_or_update_agents.py
-  └── update_foundry_agents.py
 ```
 
 ## Prerequisites
@@ -377,7 +381,7 @@ AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o-mini
 2. Navigate to your project
 3. Select **Build** > **Workflows**
 4. Select **Create new workflow** > **Import from YAML**
-5. Upload `current-deep-research-workflow.yaml`
+5. Upload `msfoundry-deep-research/workflows/current-deep-research-workflow-v2.yaml` (or `msfoundry-deep-research/workflows/current-deep-research-internally-workflow.yaml`)
 6. Configure agent references to point to deployed agents
 7. Save and test the workflow
 
