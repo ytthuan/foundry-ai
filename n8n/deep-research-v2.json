@@ -1,0 +1,873 @@
+{
+  "name": "Deep Research V2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-001",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "deep-research-trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "init-001",
+              "name": "current_date_time",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "init-002",
+              "name": "all_learnings",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "init-003",
+              "name": "current_iteration",
+              "value": "=0",
+              "type": "number"
+            },
+            {
+              "id": "init-004",
+              "name": "depth",
+              "value": "=1",
+              "type": "number"
+            },
+            {
+              "id": "init-005",
+              "name": "breadth",
+              "value": "=1",
+              "type": "number"
+            },
+            {
+              "id": "init-006",
+              "name": "enriched_query",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "init-007",
+              "name": "all_sources",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "init-008",
+              "name": "all_iteration_followups",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "init-009",
+              "name": "research_query",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "init-variables",
+      "name": "Initialize Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "seed-001",
+              "name": "enriched_query",
+              "value": "=Original Query: {{ $json.research_query }}\n\n",
+              "type": "string"
+            },
+            {
+              "id": "seed-002",
+              "name": "clarifying_input_message",
+              "value": "=Today is {{ $json.current_date_time }}.\n\nGiven the following query from the user, ask some follow up questions to clarify the research direction. Return between 3 and 5 questions:\n\n<query>{{ $json.research_query }}</query>",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "seed-enriched-query",
+      "name": "Seed Enriched Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.clarifying_input_message }}",
+        "options": {
+          "systemMessage": "You are a research assistant that helps clarify research queries. Your role is to ask thoughtful follow-up questions that will help narrow down and focus the research direction. Return between 3 and 5 questions, formatted as a numbered list."
+        }
+      },
+      "id": "clarifying-agent",
+      "name": "Clarifying Questions Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "clarifying-model",
+      "name": "OpenAI Chat Model (Clarifying)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [660, 520]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "clarify-001",
+              "name": "clarifying_questions",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "store-clarifying-questions",
+      "name": "Store Clarifying Questions",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "sim-001",
+              "name": "clarifying_answers",
+              "value": "The user has provided their initial query. For this automated workflow, we will proceed with the research based on the original query and the generated clarifying questions context.",
+              "type": "string"
+            },
+            {
+              "id": "sim-002",
+              "name": "enriched_query",
+              "value": "={{ $json.enriched_query }}\nClarifying questions:\n{{ $json.clarifying_questions }}\n\nNote: Proceeding with automated research based on the original query context.\n",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "simulate-clarifying-answers",
+      "name": "Build Enriched Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the following enriched research query, generate a compelling title and brief description for the research report:\n\n{{ $json.enriched_query }}",
+        "options": {
+          "systemMessage": "You are a research title generator. Given a research query, generate a compelling and descriptive title for the research report along with a brief 1-2 sentence description. Return your response in the following JSON format:\n{\"title\": \"Your Title Here\", \"description\": \"Brief description here\"}"
+        }
+      },
+      "id": "title-agent",
+      "name": "Report Title Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [1320, 300]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "title-model",
+      "name": "OpenAI Chat Model (Title)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [1320, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the title agent response and extract title/description\nconst items = $input.all();\nconst item = items[0];\n\nlet title = 'Research Report';\nlet description = 'A comprehensive research report';\n\ntry {\n  const output = item.json.output || item.json.text || '';\n  // Try to parse as JSON first\n  const jsonMatch = output.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    const parsed = JSON.parse(jsonMatch[0]);\n    title = parsed.title || title;\n    description = parsed.description || description;\n  }\n} catch (e) {\n  // Keep defaults if parsing fails\n}\n\nreturn [{\n  json: {\n    ...item.json,\n    report_title: title,\n    report_description: description\n  }\n}];"
+      },
+      "id": "parse-title",
+      "name": "Parse Title Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate iteration items based on depth setting\nconst items = $input.all();\nconst item = items[0];\nconst depth = item.json.depth || 1;\n\nconst iterations = [];\nfor (let i = 1; i <= depth; i++) {\n  iterations.push({\n    json: {\n      ...item.json,\n      iteration_number: i,\n      total_iterations: depth\n    }\n  });\n}\n\nreturn iterations;"
+      },
+      "id": "generate-iterations",
+      "name": "Generate Iteration Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "iteration-loop",
+      "name": "Loop Over Iterations",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1980, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "iter-001",
+              "name": "all_iteration_followups",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "iter-002",
+              "name": "serp_input_message",
+              "value": "=Today is {{ $json.current_date_time }}.\n\nGiven the following prompt from the user, generate a list of SERP queries to research the topic.\nReduce the number of words in each query to its keywords only.\nReturn a maximum of {{ $json.breadth }} queries, but feel free to return less if the original prompt is clear. Make sure each query is unique and not similar to each other:\n\n<prompt>{{ $json.enriched_query }}</prompt>{{ $json.all_learnings ? '\\n\\nHere are some learnings from previous research, use them to generate more specific queries:\\n' + $json.all_learnings : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "reset-iteration-vars",
+      "name": "Reset Iteration Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2200, 420]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.serp_input_message }}",
+        "options": {
+          "systemMessage": "You are a search query generator. Given a research prompt, generate a list of effective SERP (Search Engine Results Page) queries. Return your response as a JSON object with two arrays: \"queries\" (the search queries) and \"research_goals\" (the goal for each query). Example:\n{\"queries\": [\"query1\", \"query2\"], \"research_goals\": [\"goal1\", \"goal2\"]}\n\nKeep queries concise with only essential keywords."
+        }
+      },
+      "id": "serp-agent",
+      "name": "SERP Query Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [2420, 420]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "serp-model",
+      "name": "OpenAI Chat Model (SERP)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [2420, 640]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse SERP queries and create items for each query\nconst items = $input.all();\nconst item = items[0];\n\nlet queries = [];\nlet goals = [];\n\ntry {\n  const output = item.json.output || item.json.text || '';\n  const jsonMatch = output.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    const parsed = JSON.parse(jsonMatch[0]);\n    queries = parsed.queries || [];\n    goals = parsed.research_goals || [];\n  }\n} catch (e) {\n  // Fallback: use the enriched query as a single search\n  queries = [item.json.research_query];\n  goals = ['Research the main topic'];\n}\n\n// Limit to breadth setting\nconst breadth = item.json.breadth || 1;\nqueries = queries.slice(0, breadth);\ngoals = goals.slice(0, breadth);\n\nconst queryItems = queries.map((query, index) => ({\n  json: {\n    ...item.json,\n    current_query: query,\n    current_research_goal: goals[index] || 'Research this topic',\n    query_index: index + 1,\n    total_queries: queries.length\n  }\n}));\n\nreturn queryItems.length > 0 ? queryItems : [{ json: { ...item.json, current_query: item.json.research_query, current_research_goal: 'Research the main topic', query_index: 1, total_queries: 1 } }];"
+      },
+      "id": "parse-serp-queries",
+      "name": "Parse SERP Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 420]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "query-loop",
+      "name": "Loop Over Queries",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2860, 420]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Query: {{ $json.current_query }}\nResearch Goal: {{ $json.current_research_goal }}\n\nSearch the web for information related to this query and research goal. Provide comprehensive search results with sources.",
+        "options": {
+          "systemMessage": "You are a web search agent. Your job is to search the web for information based on the given query and research goal. Use the available web search tool to find relevant information. Return the search results with their sources/URLs."
+        }
+      },
+      "id": "websearch-agent",
+      "name": "Web Search Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [3080, 540]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.3,
+          "useResponsesApi": true,
+          "builtInTools": ["webSearch"]
+        }
+      },
+      "id": "websearch-model",
+      "name": "OpenAI Chat Model (WebSearch)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [3080, 760]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ws-001",
+              "name": "web_search_results",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "ws-002",
+              "name": "learning_input_message",
+              "value": "=Today is {{ $json.current_date_time }}.\n\nGiven the following contents from a SERP search for the query:\n<query>{{ $json.current_query }}</query>\n\nResearch Goal: {{ $json.current_research_goal }}\n\n<contents>\n{{ $json.output }}\n</contents>",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "store-search-results",
+      "name": "Store Search Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3300, 540]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.learning_input_message }}",
+        "options": {
+          "systemMessage": "You are a research analyst. Given search results, extract key learnings and identify follow-up questions for deeper research. Return your response as a JSON object with three arrays:\n1. \"learnings\": Array of key insights and facts learned (strings)\n2. \"follow_up_questions\": Array of follow-up questions for further research (strings)\n3. \"sources\": Array of source URLs or references mentioned (strings)\n\nExample:\n{\"learnings\": [\"Key fact 1\", \"Key fact 2\"], \"follow_up_questions\": [\"Question 1?\", \"Question 2?\"], \"sources\": [\"https://example.com\"]}"
+        }
+      },
+      "id": "learnings-agent",
+      "name": "Learnings Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [3520, 540]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "learnings-model",
+      "name": "OpenAI Chat Model (Learnings)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [3520, 760]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse learnings and accumulate them\nconst items = $input.all();\nconst item = items[0];\n\nlet newLearnings = [];\nlet newFollowups = [];\nlet newSources = [];\n\ntry {\n  const output = item.json.output || item.json.text || '';\n  const jsonMatch = output.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    const parsed = JSON.parse(jsonMatch[0]);\n    newLearnings = parsed.learnings || [];\n    newFollowups = parsed.follow_up_questions || [];\n    newSources = parsed.sources || [];\n  }\n} catch (e) {\n  // If parsing fails, treat the entire output as a learning\n  newLearnings = [item.json.output || 'No learnings extracted'];\n}\n\n// Accumulate with existing\nconst existingLearnings = item.json.all_learnings || '';\nconst existingFollowups = item.json.all_iteration_followups || '';\nconst existingSources = item.json.all_sources || '';\n\nconst updatedLearnings = existingLearnings + newLearnings.join('\\n') + '\\n';\nconst updatedFollowups = existingFollowups + newFollowups.join('\\n') + '\\n';\nconst updatedSources = existingSources + newSources.join('\\n') + '\\n';\n\nreturn [{\n  json: {\n    ...item.json,\n    all_learnings: updatedLearnings,\n    all_iteration_followups: updatedFollowups,\n    all_sources: updatedSources,\n    latest_learnings: newLearnings,\n    latest_followups: newFollowups,\n    latest_sources: newSources\n  }\n}];"
+      },
+      "id": "accumulate-learnings",
+      "name": "Accumulate Learnings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3740, 540]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "upd-001",
+              "name": "enriched_query",
+              "value": "={{ $json.enriched_query }}\n\nFollow-up Questions for Next Iteration:\n{{ $json.all_iteration_followups }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "update-enriched-after-iteration",
+      "name": "Update Enriched Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2200, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all learnings from the iteration loop\nconst items = $input.all();\n\n// Get the last item which should have all accumulated data\nconst lastItem = items[items.length - 1];\n\nreturn [{\n  json: {\n    ...lastItem.json\n  }\n}];"
+      },
+      "id": "aggregate-iteration-data",
+      "name": "Aggregate Iteration Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare final report input\nconst items = $input.all();\nconst item = items[0];\n\nconst reportMessage = `Today is ${item.json.current_date_time}.\n\n<prompt>${item.json.enriched_query}</prompt>\n\nHere are all the learnings from previous research:\n\n<learnings>\n${item.json.all_learnings.trim().split('\\n').map(l => `<learning>${l}</learning>`).join('\\n')}\n</learnings>\n\nHere are all the sources referenced during research:\n\n<sources>\n${item.json.all_sources.trim()}\n</sources>`;\n\nreturn [{\n  json: {\n    ...item.json,\n    report_input_message: reportMessage\n  }\n}];"
+      },
+      "id": "prepare-report-input",
+      "name": "Prepare Report Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 180]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.report_input_message }}",
+        "options": {
+          "systemMessage": "You are an expert research report writer. Given a collection of research learnings and sources, synthesize them into a comprehensive, well-structured research report.\n\nYour report should include:\n1. Executive Summary\n2. Key Findings\n3. Detailed Analysis\n4. Conclusions and Recommendations\n5. Sources/References\n\nUse markdown formatting for better readability. Be thorough but concise. Cite sources where appropriate."
+        }
+      },
+      "id": "report-agent",
+      "name": "Report Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [2860, 180]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 4096
+        }
+      },
+      "id": "report-model",
+      "name": "OpenAI Chat Model (Report)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [2860, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format final output\nconst items = $input.all();\nconst item = items[0];\n\nconst finalReport = `# ${item.json.report_title || 'Research Report'}\n\n**Description:** ${item.json.report_description || 'A comprehensive research report'}\n\n**Research Configuration:**\n- Depth: ${item.json.depth || 1} iterations\n- Breadth: ${item.json.breadth || 1} queries per iteration\n- Generated: ${item.json.current_date_time}\n\n---\n\n${item.json.output || 'Report generation failed.'}`;\n\nreturn [{\n  json: {\n    report: finalReport,\n    title: item.json.report_title,\n    description: item.json.report_description,\n    learnings_count: (item.json.all_learnings || '').split('\\n').filter(l => l.trim()).length,\n    sources_count: (item.json.all_sources || '').split('\\n').filter(s => s.trim()).length,\n    original_query: item.json.research_query\n  }\n}];"
+      },
+      "id": "format-final-output",
+      "name": "Format Final Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3080, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseText": "={{ $json.report }}"
+      },
+      "id": "respond-to-chat",
+      "name": "Respond to Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3300, 180]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Initialize Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Variables": {
+      "main": [
+        [
+          {
+            "node": "Seed Enriched Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seed Enriched Query": {
+      "main": [
+        [
+          {
+            "node": "Clarifying Questions Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clarifying Questions Agent": {
+      "main": [
+        [
+          {
+            "node": "Store Clarifying Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Clarifying)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clarifying Questions Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Clarifying Questions": {
+      "main": [
+        [
+          {
+            "node": "Build Enriched Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Enriched Query": {
+      "main": [
+        [
+          {
+            "node": "Report Title Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Title Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Title Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Title)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Report Title Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Title Response": {
+      "main": [
+        [
+          {
+            "node": "Generate Iteration Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Iteration Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Iterations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Iterations": {
+      "main": [
+        [
+          {
+            "node": "Update Enriched Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reset Iteration Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Iteration Variables": {
+      "main": [
+        [
+          {
+            "node": "SERP Query Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Query Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse SERP Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (SERP)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SERP Query Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse SERP Queries": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Queries": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Iterations",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Web Search Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Search Agent": {
+      "main": [
+        [
+          {
+            "node": "Store Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (WebSearch)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Web Search Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+
+    "Store Search Results": {
+      "main": [
+        [
+          {
+            "node": "Learnings Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learnings Agent": {
+      "main": [
+        [
+          {
+            "node": "Accumulate Learnings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Learnings)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Learnings Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate Learnings": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Enriched Query": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Iteration Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Iteration Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare Report Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Report Input": {
+      "main": [
+        [
+          {
+            "node": "Report Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Report)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Report Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Final Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {},
+  "meta": {
+    "instanceId": "deep-research-v2"
+  }
+}
