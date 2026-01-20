@@ -1,0 +1,47 @@
+kind: workflow
+trigger:
+  kind: OnConversationStart
+  id: trigger_wf
+  actions:
+    - kind: SetMultipleVariables
+      id: init-variables
+      assignments:
+        - variable: Local.current_date_time
+          value: =Now()
+        - variable: Local.input_text
+          value: =""
+        - variable: Local.tts_input
+          value: =""
+        - variable: Local.tts_response
+          value: ={}
+    - kind: Question
+      variable: Local.input_text
+      id: ask-input-text
+      entity: StringPrebuiltEntity
+      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+      prompt: |-
+        What should I say?
+    - kind: SetVariable
+      id: build-tts-input
+      variable: Local.tts_input
+      value: =Concatenate("Today is ", Text(Local.current_date_time, "yyyy-mm-dd"), ".", Char(10), Char(10), "Synthesize the following text to speech and return the audio URL.", Char(10), Char(10), "<text>", Local.input_text, "</text>")
+    - kind: InvokeAzureAgent
+      id: invoke-tts-agent
+      agent:
+        name: VoiceTtsAgent
+      input:
+        messages: =Local.tts_input
+      output:
+        autoSend: false
+        responseObject: Local.tts_response
+    - kind: SendActivity
+      id: send-audio-url
+      activity: |-
+        🔊 Your audio is ready:
+
+        {Local.tts_response.audio_url}
+    - kind: EndConversation
+      id: end-workflow
+id: ""
+name: Voice-TTS-Simple
+description: ""

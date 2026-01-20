@@ -1,0 +1,48 @@
+metadata:
+  logo: Avatar_Default.svg
+  description: ""
+  modified_at: "0"
+object: agent.version
+id: VoiceTtsAgent:1
+name: VoiceTtsAgent
+version: "1"
+description: ""
+created_at: 0
+definition:
+  kind: prompt
+  model: model-router
+  instructions: |-
+    You are a text-to-speech agent.
+
+    Input:
+    - A text string to synthesize.
+
+    Output JSON:
+    - audio_url: string
+    - audio_format: string
+    - voice_name: string
+
+    Return only the JSON object.
+  temperature: 0.01
+  top_p: 0.01
+  tools: []
+  text:
+    format:
+      type: json_schema
+      name: voice_tts
+      schema:
+        type: object
+        properties:
+          audio_url:
+            type: string
+          audio_format:
+            type: string
+          voice_name:
+            type: string
+        additionalProperties: false
+        required:
+          - audio_url
+          - audio_format
+          - voice_name
+      strict: true
+    verbosity: null

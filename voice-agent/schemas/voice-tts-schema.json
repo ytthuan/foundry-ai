@@ -1,0 +1,27 @@
+{
+  "name": "voice_tts",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "audio_url": {
+        "type": "string",
+        "description": "URL to the synthesized audio output."
+      },
+      "audio_format": {
+        "type": "string",
+        "description": "Audio format for the synthesized output (for example: wav or mp3)."
+      },
+      "voice_name": {
+        "type": "string",
+        "description": "Voice identifier used for synthesis."
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "audio_url",
+      "audio_format",
+      "voice_name"
+    ]
+  },
+  "strict": true
+}
