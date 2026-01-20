@@ -124,11 +124,9 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o"
+          "value": "gpt-5-nano"
         },
-        "options": {
-          "temperature": 0.7
-        }
+        "options": {}
       },
       "id": "clarifying-model",
       "name": "OpenAI Chat Model (Clarifying)",
@@ -203,10 +201,10 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o"
+          "value": "gpt-5-nano"
         },
         "options": {
-          "temperature": 0.7
+          "responseFormat": "json_object"
         }
       },
       "id": "title-model",
@@ -292,10 +290,10 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o"
+          "value": "gpt-5-nano"
         },
         "options": {
-          "temperature": 0.5
+          "responseFormat": "json_object"
         }
       },
       "id": "serp-model",
@@ -344,10 +342,9 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o"
+          "value": "gpt-5-nano"
         },
         "options": {
-          "temperature": 0.3,
           "useResponsesApi": true,
           "builtInTools": ["webSearch"]
         }
@@ -405,10 +402,10 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o"
+          "value": "gpt-5-nano"
         },
         "options": {
-          "temperature": 0.5
+          "responseFormat": "json_object"
         }
       },
       "id": "learnings-model",
@@ -487,12 +484,9 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o"
+          "value": "gpt-5-nano"
         },
-        "options": {
-          "temperature": 0.7,
-          "maxTokens": 4096
-        }
+        "options": {}
       },
       "id": "report-model",
       "name": "OpenAI Chat Model (Report)",
