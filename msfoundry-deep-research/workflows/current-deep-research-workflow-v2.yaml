@@ -22,6 +22,14 @@ trigger:
           value: =""
         - variable: Local.clarifying_answers
           value: =""
+        - variable: Local.clarifying_qa_iterator
+          value: =0
+        - variable: Local.total_questions
+          value: =0
+        - variable: Local.current_clarifying_question
+          value: =""
+        - variable: Local.current_clarifying_answer
+          value: =""
         - variable: Local.serp_queries
           value: ={}
         - variable: Local.query_index
@@ -84,18 +92,42 @@ trigger:
       output:
         autoSend: true
         messages: Local.clarifying_questions_message
-    - kind: Question
-      variable: Local.clarifying_answers
-      id: ask-clarifying-answers
-      entity: StringPrebuiltEntity
-      skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
-      prompt: |-
-        Please answer the clarifying questions above in one message.
-        Provide numbered answers matching the questions.
     - kind: SetVariable
-      id: append-enriched-query
-      variable: Local.enriched_query
-      value: =Concatenate(Local.enriched_query, Char(10), "Clarifying questions:", Char(10), Concat(Local.clarifying_questions_message, Text, Char(10)), Char(10), "Your answers:", Char(10), Local.clarifying_answers, Char(10))
+      id: set-total-clarifying-questions
+      variable: Local.total_questions
+      value: =CountRows(Local.clarifying_questions_message)
+    - kind: ConditionGroup
+      id: clarifying-question-loop
+      conditions:
+        - condition: =((Local.total_questions > 0) && (Local.clarifying_qa_iterator < Local.total_questions))
+          actions:
+            - kind: SetVariable
+              id: increment-clarifying-iterator
+              variable: Local.clarifying_qa_iterator
+              value: =Local.clarifying_qa_iterator + 1
+            - kind: SetVariable
+              id: set-current-clarifying-question
+              variable: Local.current_clarifying_question
+              value: =Index(Local.clarifying_questions_message, Local.clarifying_qa_iterator).Text
+            - kind: Question
+              variable: Local.current_clarifying_answer
+              id: ask-clarifying-answer
+              entity: StringPrebuiltEntity
+              skipQuestionMode: SkipOnFirstExecutionIfVariableHasValue
+              prompt: =Local.current_clarifying_question
+            - kind: SetVariable
+              id: append-clarifying-answer
+              variable: Local.clarifying_answers
+              value: '=Concatenate(Local.clarifying_answers, "Q", Text(Local.clarifying_qa_iterator), ": ", Local.current_clarifying_question, Char(10), "A", Text(Local.clarifying_qa_iterator), ": ", Local.current_clarifying_answer, Char(10))'
+            - kind: SetVariable
+              id: append-enriched-query
+              variable: Local.enriched_query
+              value: '=Concatenate(Local.enriched_query, Char(10), "Q", Text(Local.clarifying_qa_iterator), ": ", Local.current_clarifying_question, Char(10), "A", Text(Local.clarifying_qa_iterator), ": ", Local.current_clarifying_answer, Char(10))'
+            - kind: GotoAction
+              id: goto-clarifying-loop
+              actionId: clarifying-question-loop
+          id: clarifying-loop-continue
+      elseActions: []
     - kind: SendActivity
       activity: "Enriched queries: {Local.enriched_query}"
       id: show-enriched-query
